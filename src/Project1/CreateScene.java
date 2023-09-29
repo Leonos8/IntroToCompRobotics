@@ -44,6 +44,7 @@ public class CreateScene extends JPanel implements KeyListener
 	{
 		getInput();
 		createPanel();
+		generatePolygonArray();
 	}
 	
 	public void createPanel()
@@ -60,6 +61,35 @@ public class CreateScene extends JPanel implements KeyListener
         this.setVisible(true);
         //addKeyListener(this);
         frame.getContentPane().add(this);
+	}
+	
+	public void generatePolygonArray()
+	{
+		ArrayList<double[][]> polygons=new ArrayList<>();
+		obstacles=new Obstacle[numOfPolygons];
+		//double[][] polygons=generateRandomConvexPolygon();
+		
+		System.out.println(numOfPolygons);
+		
+		for(int i=0; i<numOfPolygons; i++)
+		{
+			obstacles[i]=new Obstacle();
+			
+			Random random=new Random();
+			int numVertices=random.nextInt(maxNumVertices-minNumVertices)+minNumVertices;
+			
+			polygons.add(generateRandomConvexPolygon(numVertices));
+			
+			Point[] points=new Point[numVertices];
+			
+			for(int j=0; j<numVertices; j++)
+			{
+				points[j]=new Point((int)polygons.get(i)[j][0], (int)polygons.get(i)[j][1]);
+			}
+			obstacles[i].setPoints(points);
+			//g.fillPolygon(new int[] {0, 50, 50, 0}, new int[] {0, 0, 50, 50}, 4);
+			//g.fillPolygon(obstacles[i].getPolygon());
+		}
 	}
 	
 	private static double[][] generateRandomConvexPolygon(int number_of_vertices)
@@ -352,32 +382,11 @@ public class CreateScene extends JPanel implements KeyListener
 	public void paintComponent(Graphics g)
 	{
 		super.paintComponent(g);
-
-		obstacles=new Obstacle[numOfPolygons];
 		
-		ArrayList<double[][]> polygons=new ArrayList<>();
-		Obstacle[] obstacles=new Obstacle[numOfPolygons];
-		//double[][] polygons=generateRandomConvexPolygon();
+		System.out.println(obstacles.length);
 		
-		System.out.println(numOfPolygons);
-		
-		for(int i=0; i<numOfPolygons; i++)
+		for(int i=0; i<obstacles.length; i++)
 		{
-			obstacles[i]=new Obstacle();
-			
-			Random random=new Random();
-			int numVertices=random.nextInt(maxNumVertices-minNumVertices)+minNumVertices;
-			
-			polygons.add(generateRandomConvexPolygon(numVertices));
-			
-			Point[] points=new Point[numVertices];
-			
-			for(int j=0; j<numVertices; j++)
-			{
-				points[j]=new Point((int)polygons.get(i)[j][0], (int)polygons.get(i)[j][1]);
-			}
-			obstacles[i].setPoints(points);
-			g.fillPolygon(new int[] {0, 50, 50, 0}, new int[] {0, 0, 50, 50}, 4);
 			g.fillPolygon(obstacles[i].getPolygon());
 		}
 	}
