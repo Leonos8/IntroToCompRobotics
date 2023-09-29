@@ -237,6 +237,8 @@ public class CreateScene extends JPanel implements KeyListener
       		polygon[i+1][0]=polygon[i][0]+vector_angle[0];
       		polygon[i+1][1]=polygon[i][1]+vector_angle[1];
         }
+      	
+      	System.out.println(polygon.length);
 
       	return polygon;
 
@@ -357,6 +359,8 @@ public class CreateScene extends JPanel implements KeyListener
 		Obstacle[] obstacles=new Obstacle[numOfPolygons];
 		//double[][] polygons=generateRandomConvexPolygon();
 		
+		System.out.println(numOfPolygons);
+		
 		for(int i=0; i<numOfPolygons; i++)
 		{
 			obstacles[i]=new Obstacle();
@@ -373,6 +377,7 @@ public class CreateScene extends JPanel implements KeyListener
 				points[j]=new Point((int)polygons.get(i)[j][0], (int)polygons.get(i)[j][1]);
 			}
 			obstacles[i].setPoints(points);
+			g.fillPolygon(new int[] {0, 50, 50, 0}, new int[] {0, 0, 50, 50}, 4);
 			g.fillPolygon(obstacles[i].getPolygon());
 		}
 	}
