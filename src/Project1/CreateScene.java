@@ -401,9 +401,24 @@ public class CreateScene extends JPanel implements KeyListener
 	{
 		JComponent obstacle;
 		Point[] points;
+		Polygon polygon;
 		
 		public Polygon getPolygon()
 		{
+			System.out.println(polygon.xpoints[0]);
+			System.out.println(points[0].getX());
+			return polygon;
+		}
+		
+		public void setObstacle(JComponent obstacle)
+		{
+			this.obstacle=obstacle;
+		}
+		
+		public void setPoints(Point[] points)
+		{
+			this.points=points;
+			
 			int[] xPoints=new int[points.length];
 			int[] yPoints=new int[points.length];
 			
@@ -416,17 +431,7 @@ public class CreateScene extends JPanel implements KeyListener
 				yPoints[i]=(int) points[i].getY();
 			}
 			
-			return new Polygon(xPoints, yPoints, points.length);
-		}
-		
-		public void setObstacle(JComponent obstacle)
-		{
-			this.obstacle=obstacle;
-		}
-		
-		public void setPoints(Point[] points)
-		{
-			this.points=points;
+			this.polygon=new Polygon(xPoints, yPoints, points.length);;
 		}
 	}
 }
