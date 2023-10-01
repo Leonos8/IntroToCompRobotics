@@ -68,19 +68,63 @@ public class CreateScene extends JPanel implements KeyListener
 		ArrayList<double[][]> polygons=new ArrayList<>();
 		obstacles=new Obstacle[numOfPolygons];
 		//double[][] polygons=generateRandomConvexPolygon();
-				
+		numOfPolygons=1; //TODO	
 		for(int i=0; i<numOfPolygons; i++)
 		{
 			obstacles[i]=new Obstacle();
 			
 			Random random=new Random();
 			int numVertices=random.nextInt(maxNumVertices-minNumVertices)+minNumVertices;
+			numVertices=5; //TODO
 			System.out.println(numVertices);
 			int startingX=(int)(Math.random()*frameX);
 			int startingY=(int)(Math.random()*frameX);
-			polygons.add(generateRandomConvexPolygon(numVertices));
+			minRadius=50;
+			maxRadius=100;
+			double[][] p=generateRandomConvexPolygon(numVertices, maxRadius, minRadius);
+			for(double[] x:p)
+			{
+				System.out.println(x[0]+" "+x[1]);
+			}
+			System.exit(0);
+			p=new double[][] {{0.0, 0.0},
+				{0.34322059082947887, 0.674221694356364},
+				{-0.5485071297592539, 0.8405132967750217},
+				{-0.5437471256163764, 0.816824817303606},
+				{-0.09100110592516697, 0.13393138147180883}};
 			
+			//System.exit(0);
+			//polygons.add(generateRandomConvexPolygon(numVertices));
+			double[] center={0, 0};
+			for(int j=0; j<numVertices; j++)
+			{
+				center[0]+=p[j][0];
+				center[1]+=p[j][1];
+			}
+			center[0]=center[0]/numVertices;
+			center[1]=center[1]/numVertices;
+			double maxDistance=0;
+			
+			
+			for(int j=0; j<numVertices; j++)
+			{
+				double x=p[j][0]-center[0];
+				double y=p[j][1]-center[1];
+				double d=Math.sqrt(x*x+y*y);
+				if(maxDistance<d)
+				{
+					maxDistance=d;
+				}
+			}
+			double scale=maxRadius/maxDistance;
+			for(int j=0; j<numVertices; j++)
+			{
+				p[j][0]*=scale;
+				p[j][1]*=scale;
+			}
+			polygons.add(p);
 			Point[] points=new Point[numVertices];
+			
 			
 			for(int j=0; j<numVertices; j++)
 			{
@@ -274,6 +318,250 @@ public class CreateScene extends JPanel implements KeyListener
       	System.out.println(polygon[0][1]);
       	return polygon;
 
+    }
+	
+	public static double[][] generateRandomConvexPolygon(int number_of_vertices, double max_radius, double min_radius)
+
+    {
+
+      if(max_radius<=0)
+
+        throw new RuntimeException("Max radius can't be 0 or negative");
+
+      if(min_radius<=0)
+
+        throw new RuntimeException("Min radius can't be 0 or negative");
+
+      if(max_radius<min_radius)
+
+        throw new RuntimeException("Max radius can't be smaller them Min radius");
+
+
+      double[][] polygon;
+
+
+
+      if(min_radius==max_radius)
+
+        {
+
+          double max_angle=Math.PI*2;
+
+          double[] angles=new double[number_of_vertices];
+
+          double angle;
+
+          for(int i=0; i<number_of_vertices;)
+
+            {
+
+              angle=Math.random()*max_angle;
+
+              if(angle>0)
+
+                {
+
+                  int j=i-1;
+
+                  while(j>=0)
+
+                    {
+
+                      if(angles[j]>angle)
+
+                        {
+
+                          angles[j+1]=angles[j];
+
+                          j--;
+
+                        }
+
+                      else
+
+                        break;
+
+                    }
+
+                  if(j<0)
+
+                    {
+
+                      angles[0]=angle;
+
+                      i++;
+
+                    }
+
+                  else
+
+                    {
+
+                      if(angles[j]<angle)
+
+                        {
+
+                          angles[j+1]=angle;
+
+                          i++;
+
+                        }
+
+                      else
+
+                        {
+
+                          for(int k=j+1; k<i; k++)
+
+                            angles[k]=angles[k+1];
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+
+
+          polygon=new double[number_of_vertices][2];
+
+          for(int i=0; i<number_of_vertices; i++)
+
+            {
+
+              polygon[i][0]=max_radius*Math.cos(angles[i]);
+
+              polygon[i][1]=max_radius*Math.sin(angles[i]);
+
+            }
+
+         
+
+          return polygon;
+
+        }
+
+
+
+      polygon=generateRandomConvexPolygon(number_of_vertices);
+
+
+
+      // Find the center
+
+      double[] center = {0, 0};
+
+      for(int i=0; i<number_of_vertices; i++)
+
+        {
+
+          center[0]+=polygon[i][0];
+
+          center[1]+=polygon[i][1];
+
+        }
+
+
+
+      center[0]=center[0]/number_of_vertices;
+
+      center[1]=center[1]/number_of_vertices;
+
+
+
+      double[] distance=new double[number_of_vertices];
+
+      double max_distance=0;
+
+      for(int i=0; i<number_of_vertices; i++)
+
+        {
+
+          // Center the polygon
+
+          polygon[i][0]-=center[0];
+
+          polygon[i][1]-=center[1];
+
+          // Calculate the distance of the vertex and min and max distances
+
+          distance[i]=Math.sqrt(polygon[i][0]*polygon[i][0]+polygon[i][1]*polygon[i][1]);
+
+          if(max_distance<distance[i])
+
+            max_distance=distance[i];
+
+        }
+
+
+
+      // Scale Polygon to the Maximum Radius, so that all vertices fit in it
+
+      double scale=max_radius/max_distance;
+
+      double min_distance=Double.POSITIVE_INFINITY;
+
+      for(int i=0; i<number_of_vertices; i++)
+
+        {
+
+          polygon[i][0]*=scale;
+
+          polygon[i][1]*=scale;
+
+
+
+          // scale the distance as well
+
+          distance[i]=distance[i]*scale;
+
+          if(min_distance>distance[i])
+
+            min_distance=distance[i];
+
+        }
+
+
+
+      // If Polygon is not inside min radius, stretch it so that all vertices
+
+      // go outside min radius but not outside Max radius
+
+      if(min_distance<min_radius)
+
+        {
+
+          double delta_radius=max_radius-min_radius;
+
+          double delta_distance=max_radius-min_distance;
+
+          double delta_radius_delta_distance=delta_radius/delta_distance; // delta_distance can be 0 only if min idistance is max_radius which is if the vertex is in the center
+
+          double stretch;
+
+
+
+          for(int i=0; i<number_of_vertices; i++)
+
+            {
+
+              stretch=(max_radius-(max_radius-distance[i])*delta_radius_delta_distance)/distance[i];
+
+
+
+              polygon[i][0]*=stretch;
+
+              polygon[i][1]*=stretch;
+
+            }
+
+        }
+
+     
+
+      return polygon;
     }
 	
 	public void getInput()
