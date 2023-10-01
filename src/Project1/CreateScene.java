@@ -42,7 +42,10 @@ public class CreateScene extends JPanel implements KeyListener
 	
 	public CreateScene()
 	{
-		getInput();
+		numOfPolygons=4;
+		minRadius=50;
+		maxRadius=100;
+		//getInput();
 		createPanel();
 		generatePolygonArray();
 	}
@@ -74,25 +77,24 @@ public class CreateScene extends JPanel implements KeyListener
 			obstacles[i]=new Obstacle();
 			
 			Random random=new Random();
-			int numVertices=random.nextInt(maxNumVertices-minNumVertices)+minNumVertices;
-			numVertices=5; //TODO
-			System.out.println(numVertices);
+			//int numVertices=random.nextInt(maxNumVertices-minNumVertices)+minNumVertices; //TODO
+			int numVertices=5; //TODO
+			//System.out.println(numVertices);
 			int startingX=(int)(Math.random()*frameX);
 			int startingY=(int)(Math.random()*frameX);
-			minRadius=50;
-			maxRadius=100;
 			double[][] p=generateRandomConvexPolygon(numVertices, maxRadius, minRadius);
+			
+			//System.exit(0);
+			p=new double[][] {{79.65373604474343, -60.4589309706543},
+				{72.16939448171748, 64.79865886443858},
+				{-25.48092654991637, 50.93040211724438},
+				{-62.793272690955995, 3.032167018316354},
+				{-63.54893128558857, -58.302297029345006}};
+			
 			for(double[] x:p)
 			{
 				System.out.println(x[0]+" "+x[1]);
 			}
-			System.exit(0);
-			p=new double[][] {{0.0, 0.0},
-				{0.34322059082947887, 0.674221694356364},
-				{-0.5485071297592539, 0.8405132967750217},
-				{-0.5437471256163764, 0.816824817303606},
-				{-0.09100110592516697, 0.13393138147180883}};
-			
 			//System.exit(0);
 			//polygons.add(generateRandomConvexPolygon(numVertices));
 			double[] center={0, 0};
@@ -123,18 +125,20 @@ public class CreateScene extends JPanel implements KeyListener
 				p[j][1]*=scale;
 			}
 			polygons.add(p);
+			
 			Point[] points=new Point[numVertices];
-			
-			
+			System.out.println(numVertices);
+			startingX=500;
+			startingY=500;
 			for(int j=0; j<numVertices; j++)
 			{
-				System.out.println(polygons.get(i)[j][0]);
 				//TODO Issue right here
-				int diff=maxRadius-minRadius;
-				points[j]=new Point((int)((polygons.get(i)[j][0]*diff)+minRadius)+startingX, (int)((polygons.get(i)[j][1]*diff)+minRadius)+startingY);
+				points[j]=new Point((int)(polygons.get(i)[j][0])+startingX, (int)(polygons.get(i)[j][1])+startingY);
+				System.out.println(points[j].getX()+"\t"+points[j].getY());
 			}
-			System.out.println(points[0].getX());
+			//System.out.println(points[0].getX());
 			obstacles[i].setPoints(points);
+			//System.out.println(obstacles[i].getPoints()[1].getX());
 			//g.fillPolygon(new int[] {0, 50, 50, 0}, new int[] {0, 0, 50, 50}, 4);
 			//g.fillPolygon(obstacles[i].getPolygon());
 		}
@@ -315,7 +319,7 @@ public class CreateScene extends JPanel implements KeyListener
       		polygon[i+1][0]=polygon[i][0]+vector_angle[0];
       		polygon[i+1][1]=polygon[i][1]+vector_angle[1];
         }
-      	System.out.println(polygon[0][1]);
+      	//System.out.println(polygon[0][1]);
       	return polygon;
 
     }
@@ -672,15 +676,20 @@ public class CreateScene extends JPanel implements KeyListener
 	public void paintComponent(Graphics g)
 	{
 		super.paintComponent(g);
+		//System.out.println("1\t"+obstacles[0].getPolygon().xpoints[0]);
 		
-		System.out.println(obstacles.length);
+		Polygon tmp=new Polygon(new int[] {579, 572, 475, 438, 437}, new int[] {440, 564, 550, 503, 442}, 5);
+		//g.fillPolygon(obstacles[0].getPolygon());
+		//System.out.println(obstacles.length);
 		
-		for(int i=0; i<obstacles.length; i++)
+		//g.fillPolygon(new int[] {579, 572, 475, 438, 437}, new int[] {440, 564, 550, 503, 442}, 5);
+		
+		for(int i=0; i<numOfPolygons; i++)
 		{
 			System.out.println(i);
- 			System.out.println("P"+obstacles[i].points[0].getY());
- 			System.out.println("P"+obstacles[i].points[1].getY());
- 			System.out.println("P"+obstacles[i].points[2].getY());
+ 			//System.out.println("P"+obstacles[i].points[0].getY());
+ 			//System.out.println("P"+obstacles[i].points[1].getY());
+ 			//System.out.println("P"+obstacles[i].points[2].getY());
 			g.fillPolygon(obstacles[i].getPolygon());
 		}
 	}
@@ -691,10 +700,15 @@ public class CreateScene extends JPanel implements KeyListener
 		Point[] points;
 		Polygon polygon;
 		
+		public Point[] getPoints()
+		{
+			return points;
+		}
+		
 		public Polygon getPolygon()
 		{
-			System.out.println(polygon.xpoints[0]);
-			System.out.println(points[0].getX());
+			//System.out.println(polygon.xpoints[0]);
+			//System.out.println(points[0].getX());
 			return polygon;
 		}
 		
@@ -711,7 +725,7 @@ public class CreateScene extends JPanel implements KeyListener
 			int[] yPoints=new int[points.length];
 			
 			System.out.println();
-
+			
 			for(int i=0; i<points.length; i++)
 			{
 				System.out.println(points[i].getX()+"\t"+points[i].getY());
