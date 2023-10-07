@@ -4,11 +4,16 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.Polygon;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -16,14 +21,26 @@ import java.util.Random;
 import java.util.Scanner;
 
 import javax.swing.JComponent;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
-public class CreateScene extends JPanel implements KeyListener
+public class CreateScene extends JPanel implements KeyListener, ActionListener
 {
+	//This has a 4cm per pixel, 400 cm per meter. 2 meters 
 	File path;
 	
 	JFrame frame;
+	
+	JMenuBar mb;
+	
+	 JMenu fileMenu;
+	 
+	 JMenuItem saveAsItem;
 	
 	int frameX=800;
 	int frameY=800;
@@ -33,23 +50,62 @@ public class CreateScene extends JPanel implements KeyListener
 	int minRadius;
 	int maxRadius;
 	
+	boolean fromFile;
+	
 	Obstacle[] obstacles;
 	
-	public static void main(String[] args)
+	RigidBody2D rb;
+	
+	/*public static void main(String[] args)
 	{
 		CreateScene cs=new CreateScene();
+		
+		cs.run();
+	}*/
+	
+	public void run()
+	{
+		//numOfPolygons=10;
+		//minNumVertices=3;
+		//maxNumVertices=5;
+		//minRadius=50;
+		//maxRadius=100;
+		getInput();
+		createPanel();
+		if(!fromFile)
+		{
+			generatePolygonArray();
+		}
+		checkObstacleCollisions();
+		createRB();
+		rb.createRigidBody();
+		repaint();
 	}
 	
-	public CreateScene()
+	@Override
+	public void actionPerformed(ActionEvent e) 
 	{
-		numOfPolygons=10;
-		minNumVertices=3;
-		maxNumVertices=5;
-		minRadius=50;
-		maxRadius=100;
-		//getInput();
-		createPanel();
-		generatePolygonArray();
+		if(e.getSource()==saveAsItem)
+		{
+			//System.out.println("SAI");
+			saveAsAction();
+		}
+	}
+	
+	public void checkObstacleCollisions()
+	{
+		for(int i=0; i<obstacles.length-1; i++)
+		{
+			for(int j=i+1; j<obstacles.length; j++)
+			{
+				if(CollisionChecking.separatingAxisTheorem(obstacles[i], obstacles[j]))
+				{
+					System.out.println("test");
+					obstacles[i].setCollision(true);
+					obstacles[j].setCollision(true);
+				}
+			}
+		}
 	}
 	
 	public void createPanel()
@@ -58,14 +114,40 @@ public class CreateScene extends JPanel implements KeyListener
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
         frame.setSize(frameX, frameY);
-        frame.setVisible(true);
+        //frame.setVisible(true);
         frame.addKeyListener(this);
         
         this.setBackground(Color.white);
+        //this.setLayout(new BorderLayout());
         this.setLayout(null);
         this.setVisible(true);
-        //addKeyListener(this);
+        addKeyListener(this);
         frame.getContentPane().add(this);
+        
+        mb = new JMenuBar();
+        fileMenu = new JMenu("File");
+        saveAsItem = new JMenuItem("Save As");
+        saveAsItem.addActionListener(this);
+        fileMenu.add(saveAsItem);
+        mb.add(fileMenu);
+        frame.setJMenuBar(mb);
+        
+        frame.setVisible(true);
+	}
+	
+	public void createRB() //TODO put in random orientation and location
+	{
+		int centerX=(int)(Math.random()*frameX);
+		int centerY=(int)(Math.random()*frameY);
+		
+		int x=80;
+		int y=40;
+		
+		Point[] points=new Point[] {new Point(centerX-(x/2), centerY-(y/2)), 
+				new Point(centerX+(x/2), centerY-(y/2)), new Point(centerX-(x/2), centerY+(y/2)),
+				new Point(centerX+(x/2), centerY+(y/2))};
+		
+		this.rb=new RigidBody2D(points, new Point(centerX, centerY));
 	}
 	
 	public void generatePolygonArray()
@@ -78,12 +160,14 @@ public class CreateScene extends JPanel implements KeyListener
 			obstacles[i]=new Obstacle();
 			
 			Random random=new Random();
-			int numVertices=minNumVertices+(int)(Math.random()*(maxNumVertices-minNumVertices));
+			int numVertices=minNumVertices+(int)(Math.random()*(maxNumVertices-minNumVertices+1));
+			System.out.println(numVertices);
 			//int numVertices=random.nextInt(maxNumVertices-minNumVertices)+minNumVertices; //TODO
 			//int numVertices=5; //TODO
 			//System.out.println(numVertices);
 			int centerX=(int)(Math.random()*frameX);
-			int centerY=(int)(Math.random()*frameX);
+			int centerY=(int)(Math.random()*frameY);
+			obstacles[i].setCenter(new Point(centerX, centerY));
 			double[][] p=generateRandomConvexPolygon(numVertices, maxRadius, minRadius);
 			//System.out.println(p.length);
 			
@@ -117,18 +201,20 @@ public class CreateScene extends JPanel implements KeyListener
 			polygons.add(p);
 			
 			Point[] points=new Point[numVertices];
-			System.out.println(numVertices+"\t"+points.length);
+			//System.out.println(numVertices+"\t"+points.length);
 			for(int j=0; j<numVertices; j++)
 			{
 				//System.out.println(polygons.get(i)[j][0]);
 				//points[j]=new Point(500, 500);
-				points[j]=new Point((int)(polygons.get(i)[j][0])+centerX, (int)(polygons.get(i)[j][1])+centerY);
+				points[j]=new Point((int)(polygons.get(i)[j][0])+centerX, (int)(polygons.get(i)[j][1])
+						+centerY);
 				//System.out.println(polygons.get(i)[j][0]);
 			}
 			/*System.out.println(numVertices+"\t"+points.length);
 			for(int j=0; j<numVertices; j++)
 			{
-				points[j]=new Point((int)(polygons.get(i)[j][0])+centerX, (int)(polygons.get(i)[j][1])+centerY);
+				points[j]=new Point((int)(polygons.get(i)[j][0])+centerX, (int)(polygons.get(i)[j][1])
+				+centerY);
 				System.out.println(points[j].getX()+"\t"+points[j].getY());
 			}
 			//System.out.println(points[0].getX());*/
@@ -319,7 +405,8 @@ public class CreateScene extends JPanel implements KeyListener
 
     }
 	
-	public static double[][] generateRandomConvexPolygon(int number_of_vertices, double max_radius, double min_radius)
+	public static double[][] generateRandomConvexPolygon(int number_of_vertices, double max_radius, 
+			double min_radius)
 
     {
 
@@ -536,7 +623,9 @@ public class CreateScene extends JPanel implements KeyListener
 
           double delta_distance=max_radius-min_distance;
 
-          double delta_radius_delta_distance=delta_radius/delta_distance; // delta_distance can be 0 only if min idistance is max_radius which is if the vertex is in the center
+          double delta_radius_delta_distance=delta_radius/delta_distance; 
+          // delta_distance can be 0 only if min idistance is max_radius 
+          //which is if the vertex is in the center
 
           double stretch;
 
@@ -574,10 +663,21 @@ public class CreateScene extends JPanel implements KeyListener
 		{
 			System.out.print("What is the path of the file? ");
 			String filePath=sc.nextLine();
+			Driver.log.setStartTime(System.currentTimeMillis());
+			if(filePath.charAt(0)=='\"')
+			{
+				filePath=filePath.substring(1);
+			}
+			if(filePath.charAt(filePath.length()-1)=='\"')
+			{
+				filePath=filePath.substring(0, filePath.length()-1);
+			}
 			getInfoFromFile(filePath);
+			this.fromFile=true;
 		}
 		else
 		{
+			this.fromFile=false;
 			do
 			{
 				try
@@ -645,9 +745,55 @@ public class CreateScene extends JPanel implements KeyListener
 		}
 	}
 	
-	public void getInfoFromFile(String filePath)
+	public void getInfoFromFile(String filePath) //TODO will adjust to account for start and goal in first
 	{
-		//TODO
+		try {
+			Scanner sc=new Scanner(new File(filePath));
+			
+			String infoString=sc.nextLine();
+			String[] info=infoString.split(",");
+			
+			this.numOfPolygons=Integer.parseInt(info[0]);
+			this.minNumVertices=Integer.parseInt(info[1]);
+			this.maxNumVertices=Integer.parseInt(info[2]);
+			this.minRadius=Integer.parseInt(info[3]);
+			this.maxRadius=Integer.parseInt(info[4]);
+			
+			obstacles=new Obstacle[numOfPolygons];
+			
+			int i=0;
+			while(sc.hasNext())
+			{
+				obstacles[i]=new Obstacle();
+				
+				String line=sc.nextLine();
+				String obstacleInfoString=line.split(":")[0];
+				String[] obstacleInfo=obstacleInfoString.split(",");
+				//0 is centerX, 1 is centerY
+				obstacles[i].setCenter(new Point(Integer.parseInt(obstacleInfo[0]), 
+						Integer.parseInt(obstacleInfo[1])));
+				
+				String[] spaceSplit=line.split(":")[1].split(" ");
+				String[][] pointString=new String[spaceSplit.length][2];
+				
+				Point[] points=new Point[spaceSplit.length];
+				
+				for(int j=0; j<spaceSplit.length; j++)
+				{
+					pointString[j]=spaceSplit[j].split(",");
+					
+					points[j]=new Point(Integer.parseInt(pointString[j][0]), 
+							Integer.parseInt(pointString[j][1]));
+				}
+				
+				obstacles[i].setPoints(points);
+				
+				i++;
+			}
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	@Override
@@ -657,9 +803,29 @@ public class CreateScene extends JPanel implements KeyListener
 	}
 
 	@Override
-	public void keyPressed(KeyEvent e) {
-		// TODO Auto-generated method stub
-		
+	public void keyPressed(KeyEvent e) 
+	{
+		if(e.getKeyCode()==KeyEvent.VK_UP)
+		{
+			
+		}
+		if(e.getKeyCode()==KeyEvent.VK_DOWN)
+		{
+			
+		}
+		if(e.getKeyCode()==KeyEvent.VK_LEFT)
+		{
+			int angle=-10;
+			
+			System.out.println("LEFT");
+			
+			rb.rotate(angle);
+			repaint();
+		}
+		if(e.getKeyCode()==KeyEvent.VK_RIGHT)
+		{
+			
+		}
 	}
 
 	@Override
@@ -673,27 +839,122 @@ public class CreateScene extends JPanel implements KeyListener
 		super.paintComponent(g);
 		//System.out.println("1\t"+obstacles[0].getPolygon().xpoints[0]);
 		
-		//Polygon tmp=new Polygon(new int[] {579, 572, 475, 438, 437}, new int[] {440, 564, 550, 503, 442}, 5);
-		//g.fillPolygon(obstacles[0].getPolygon());
-		//System.out.println(obstacles.length);
-		
 		//g.fillPolygon(new int[] {579, 572, 475, 438, 437}, new int[] {440, 564, 550, 503, 442}, 5);
 		
 		for(int i=0; i<numOfPolygons; i++)
 		{
-			System.out.println(i);
- 			//System.out.println("P"+obstacles[i].points[0].getY());
- 			//System.out.println("P"+obstacles[i].points[1].getY());
- 			//System.out.println("P"+obstacles[i].points[2].getY());
-			g.fillPolygon(obstacles[i].getPolygon());
+			/*if(obstacles[i].getCollision())
+			{
+				g.setColor(Color.red);
+			}
+			else
+			{
+				g.setColor(Color.black);
+			}
+			g.fillPolygon(obstacles[i].getPolygon());*/
+			
+			if(obstacles[i].getCollision())
+			{
+				g.fillPolygon(obstacles[i].getPolygon());
+			}
+			else
+			{
+				g.drawPolygon(obstacles[i].getPolygon());
+			}
+			
+			if(rb!=null)
+			{
+				g.fillRect((int)rb.getPoints()[0].getX(), (int)rb.getPoints()[0].getY(), 
+						(int)rb.getX(), (int)rb.getY());
+			}
+		}
+	}
+	
+	public void saveAsAction()
+	{
+		JFileChooser fileChooser=new JFileChooser();
+		int result=fileChooser.showSaveDialog(this);
+		
+		File file=fileChooser.getSelectedFile();
+		try {
+			String fileName=file.getName();
+			if(!fileName.endsWith(".txt"))
+			{
+				String newName=file.getAbsolutePath()+".txt";
+				file=new File(newName);
+				//System.out.println(newName);
+			}
+					
+			if(!file.exists())
+			{
+				file.createNewFile();
+				
+				saveWorld(file);
+			}
+			else
+			{
+				JOptionPane.showMessageDialog(this, "This file name already exists.\nFile not saved.");
+			}
+		} catch (IOException ex) {
+			// TODO Auto-generated catch block
+			ex.printStackTrace();
+		}
+	}
+	
+	public void saveWorld(File file) //TODO will adjust to account for start and goal in first line
+	{
+		try 
+		{
+			FileWriter writer = new FileWriter(file);
+			
+			writer.write(String.valueOf(this.numOfPolygons)+','+String.valueOf(this.minNumVertices)+','
+					+String.valueOf(this.maxNumVertices)+','+String.valueOf(this.minRadius)+','
+					+String.valueOf(this.maxRadius)+'\n');
+			
+			for(int i=0; i<this.numOfPolygons; i++)
+			{
+				Point[] points=obstacles[i].getPoints();
+				
+				writer.write(String.valueOf(obstacles[i].getCenter().getX())+','
+						+String.valueOf(obstacles[i].getCenter().getY())+':');
+				
+				for(int j=0; j<points.length; j++)
+				{
+					writer.write(String.valueOf((int)points[j].getX())+','
+							+String.valueOf((int)points[j].getY())+' ');
+				}
+				writer.write('\n');
+			}
+			
+			
+			writer.close();
+		      
+			//System.out.println("Successfully wrote to the file.");
+		} catch (IOException ex) {
+			//System.out.println("An error occurred.");
+			ex.printStackTrace();
 		}
 	}
 	
 	public class Obstacle
-	{
-		JComponent obstacle;
+	{		
 		Point[] points;
+		
 		Polygon polygon;
+		
+		Point center;
+				
+		boolean collision=false;
+		
+		public Point getCenter()
+		{
+			return center;
+		}
+		
+		public boolean getCollision()
+		{
+			return collision;
+		}
 		
 		public Point[] getPoints()
 		{
@@ -702,14 +963,17 @@ public class CreateScene extends JPanel implements KeyListener
 		
 		public Polygon getPolygon()
 		{
-			//System.out.println(polygon.xpoints[0]);
-			//System.out.println(points[0].getX());
 			return polygon;
 		}
 		
-		public void setObstacle(JComponent obstacle)
+		public void setCenter(Point center)
 		{
-			this.obstacle=obstacle;
+			this.center=center;
+		}
+		
+		public void setCollision(boolean collision)
+		{
+			this.collision=collision;
 		}
 		
 		public void setPoints(Point[] points)
@@ -719,11 +983,11 @@ public class CreateScene extends JPanel implements KeyListener
 			int[] xPoints=new int[points.length];
 			int[] yPoints=new int[points.length];
 			
-			System.out.println();
+			//System.out.println();
 			
 			for(int i=0; i<points.length; i++)
 			{
-				System.out.println(points[i].getX()+"\t"+points[i].getY());
+				//System.out.println(points[i].getX()+"\t"+points[i].getY());
 				xPoints[i]=(int) points[i].getX();
 				yPoints[i]=(int) points[i].getY();
 			}
