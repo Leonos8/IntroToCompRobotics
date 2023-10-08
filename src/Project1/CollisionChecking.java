@@ -1,7 +1,7 @@
 package Project1;
 
 import java.awt.Point;
-import java.util.ArrayList;
+import java.awt.geom.Point2D;
 
 import Project1.CreateScene.Obstacle;
 
@@ -20,8 +20,8 @@ public class CollisionChecking
 	
 	public static boolean separatingAxisTheorem(Obstacle o1, Obstacle o2)
 	{
-		Point[] p1=o1.getPoints();
-		Point[] p2=o2.getPoints();
+		Point2D[] p1=o1.getPoints();
+		Point2D[] p2=o2.getPoints();
 		
 		boolean collision=false;
 		
@@ -61,8 +61,8 @@ public class CollisionChecking
 	
 	public static boolean separatingAxisTheorem(RigidBody2D rb, Obstacle o1)
 	{
-		Point[] p1=o1.getPoints();
-		Point[] p2=rb.getPoints();
+		Point2D[] p1=o1.getPoints();
+		Point2D[] p2=rb.getPoints();
 		
 		boolean collision=false;
 		

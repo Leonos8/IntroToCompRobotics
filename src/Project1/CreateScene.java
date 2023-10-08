@@ -2,13 +2,11 @@ package Project1;
 
 import java.awt.Color;
 import java.awt.Graphics;
-import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -20,7 +18,6 @@ import java.util.Comparator;
 import java.util.Random;
 import java.util.Scanner;
 
-import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
@@ -137,17 +134,22 @@ public class CreateScene extends JPanel implements KeyListener, ActionListener
 	
 	public void createRB() //TODO put in random orientation and location
 	{
-		int centerX=(int)(Math.random()*frameX);
-		int centerY=(int)(Math.random()*frameY);
+		double centerX=(Math.random()*frameX);
+		double centerY=(Math.random()*frameY);
+		double angle=Math.random()*360;
 		
-		int x=80;
-		int y=40;
+		double x=80;
+		double y=40;
 		
-		Point[] points=new Point[] {new Point(centerX-(x/2), centerY-(y/2)), 
-				new Point(centerX+(x/2), centerY-(y/2)), new Point(centerX-(x/2), centerY+(y/2)),
-				new Point(centerX+(x/2), centerY+(y/2))};
+		Point2D[] points=new Point2D[4];
+		points[0]=new Point2D.Double(centerX-(x/2), centerY-(y/2));
+		points[1]=new Point2D.Double(centerX+(x/2), centerY-(y/2));
+		points[2]=new Point2D.Double(centerX+(x/2), centerY+(y/2));
+		points[3]=new Point2D.Double(centerX-(x/2), centerY+(y/2));
 		
-		this.rb=new RigidBody2D(points, new Point(centerX, centerY));
+		this.rb=new RigidBody2D(points, new Point2D.Double(centerX, centerY), angle);
+		
+		rb.rotate(angle);
 	}
 	
 	public void generatePolygonArray()
@@ -165,9 +167,9 @@ public class CreateScene extends JPanel implements KeyListener, ActionListener
 			//int numVertices=random.nextInt(maxNumVertices-minNumVertices)+minNumVertices; //TODO
 			//int numVertices=5; //TODO
 			//System.out.println(numVertices);
-			int centerX=(int)(Math.random()*frameX);
-			int centerY=(int)(Math.random()*frameY);
-			obstacles[i].setCenter(new Point(centerX, centerY));
+			double centerX=(Math.random()*frameX);
+			double centerY=(Math.random()*frameY);
+			obstacles[i].setCenter(new Point2D.Double(centerX, centerY));
 			double[][] p=generateRandomConvexPolygon(numVertices, maxRadius, minRadius);
 			//System.out.println(p.length);
 			
@@ -200,14 +202,13 @@ public class CreateScene extends JPanel implements KeyListener, ActionListener
 			}
 			polygons.add(p);
 			
-			Point[] points=new Point[numVertices];
+			Point2D[] points=new Point2D[numVertices];
 			//System.out.println(numVertices+"\t"+points.length);
 			for(int j=0; j<numVertices; j++)
 			{
 				//System.out.println(polygons.get(i)[j][0]);
 				//points[j]=new Point(500, 500);
-				points[j]=new Point((int)(polygons.get(i)[j][0])+centerX, (int)(polygons.get(i)[j][1])
-						+centerY);
+				points[j]=new Point2D.Double((polygons.get(i)[j][0])+centerX, (polygons.get(i)[j][1])+centerY);
 				//System.out.println(polygons.get(i)[j][0]);
 			}
 			/*System.out.println(numVertices+"\t"+points.length);
@@ -770,20 +771,20 @@ public class CreateScene extends JPanel implements KeyListener, ActionListener
 				String obstacleInfoString=line.split(":")[0];
 				String[] obstacleInfo=obstacleInfoString.split(",");
 				//0 is centerX, 1 is centerY
-				obstacles[i].setCenter(new Point(Integer.parseInt(obstacleInfo[0]), 
-						Integer.parseInt(obstacleInfo[1])));
+				obstacles[i].setCenter(new Point2D.Double(Double.parseDouble(obstacleInfo[0]), 
+						Double.parseDouble(obstacleInfo[1])));
 				
 				String[] spaceSplit=line.split(":")[1].split(" ");
 				String[][] pointString=new String[spaceSplit.length][2];
 				
-				Point[] points=new Point[spaceSplit.length];
+				Point2D[] points=new Point2D[spaceSplit.length];
 				
 				for(int j=0; j<spaceSplit.length; j++)
 				{
 					pointString[j]=spaceSplit[j].split(",");
 					
-					points[j]=new Point(Integer.parseInt(pointString[j][0]), 
-							Integer.parseInt(pointString[j][1]));
+					points[j]=new Point2D.Double(Double.parseDouble(pointString[j][0]), 
+							Double.parseDouble(pointString[j][1]));
 				}
 				
 				obstacles[i].setPoints(points);
@@ -815,7 +816,7 @@ public class CreateScene extends JPanel implements KeyListener, ActionListener
 		}
 		if(e.getKeyCode()==KeyEvent.VK_LEFT)
 		{
-			int angle=-10;
+			int angle=-15;
 			
 			System.out.println("LEFT");
 			
@@ -824,7 +825,12 @@ public class CreateScene extends JPanel implements KeyListener, ActionListener
 		}
 		if(e.getKeyCode()==KeyEvent.VK_RIGHT)
 		{
+			int angle=15;
 			
+			System.out.println("RIGHT");
+			
+			rb.rotate(angle);
+			repaint();
 		}
 	}
 
@@ -864,8 +870,12 @@ public class CreateScene extends JPanel implements KeyListener, ActionListener
 			
 			if(rb!=null)
 			{
-				g.fillRect((int)rb.getPoints()[0].getX(), (int)rb.getPoints()[0].getY(), 
-						(int)rb.getX(), (int)rb.getY());
+				g.fillPolygon(new int[] {(int)rb.getPoints()[0].getX(), (int)rb.getPoints()[1].getX(), (int)rb.getPoints()[2].getX(), 
+						(int)rb.getPoints()[3].getX()}, new int[] {(int)rb.getPoints()[0].getY(), (int)rb.getPoints()[1].getY(), 
+								(int)rb.getPoints()[2].getY(), (int)rb.getPoints()[3].getY()}, 4);
+				
+				//g.fillRect((int)rb.getPoints()[0].getX(), (int)rb.getPoints()[0].getY(), 
+						//(int)rb.getX(), (int)rb.getY());
 			}
 		}
 	}
@@ -913,15 +923,15 @@ public class CreateScene extends JPanel implements KeyListener, ActionListener
 			
 			for(int i=0; i<this.numOfPolygons; i++)
 			{
-				Point[] points=obstacles[i].getPoints();
+				Point2D[] points=obstacles[i].getPoints();
 				
 				writer.write(String.valueOf(obstacles[i].getCenter().getX())+','
 						+String.valueOf(obstacles[i].getCenter().getY())+':');
 				
 				for(int j=0; j<points.length; j++)
 				{
-					writer.write(String.valueOf((int)points[j].getX())+','
-							+String.valueOf((int)points[j].getY())+' ');
+					writer.write(String.valueOf(points[j].getX())+','
+							+String.valueOf(points[j].getY())+' ');
 				}
 				writer.write('\n');
 			}
@@ -938,15 +948,15 @@ public class CreateScene extends JPanel implements KeyListener, ActionListener
 	
 	public class Obstacle
 	{		
-		Point[] points;
+		Point2D[] points;
 		
 		Polygon polygon;
 		
-		Point center;
+		Point2D center;
 				
 		boolean collision=false;
 		
-		public Point getCenter()
+		public Point2D getCenter()
 		{
 			return center;
 		}
@@ -956,7 +966,7 @@ public class CreateScene extends JPanel implements KeyListener, ActionListener
 			return collision;
 		}
 		
-		public Point[] getPoints()
+		public Point2D[] getPoints()
 		{
 			return points;
 		}
@@ -966,7 +976,7 @@ public class CreateScene extends JPanel implements KeyListener, ActionListener
 			return polygon;
 		}
 		
-		public void setCenter(Point center)
+		public void setCenter(Point2D center)
 		{
 			this.center=center;
 		}
@@ -976,7 +986,7 @@ public class CreateScene extends JPanel implements KeyListener, ActionListener
 			this.collision=collision;
 		}
 		
-		public void setPoints(Point[] points)
+		public void setPoints(Point2D[] points)
 		{
 			this.points=points;
 			
@@ -988,8 +998,8 @@ public class CreateScene extends JPanel implements KeyListener, ActionListener
 			for(int i=0; i<points.length; i++)
 			{
 				//System.out.println(points[i].getX()+"\t"+points[i].getY());
-				xPoints[i]=(int) points[i].getX();
-				yPoints[i]=(int) points[i].getY();
+				xPoints[i]=(int)points[i].getX();
+				yPoints[i]=(int)points[i].getY();
 			}
 			
 			this.polygon=new Polygon(xPoints, yPoints, points.length);;
