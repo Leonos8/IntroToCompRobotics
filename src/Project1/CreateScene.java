@@ -35,9 +35,9 @@ public class CreateScene extends JPanel implements KeyListener, ActionListener
 	
 	JMenuBar mb;
 	
-	 JMenu fileMenu;
+	JMenu fileMenu;
 	 
-	 JMenuItem saveAsItem;
+	JMenuItem saveAsItem;
 	
 	int frameX=800;
 	int frameY=800;
@@ -806,31 +806,89 @@ public class CreateScene extends JPanel implements KeyListener, ActionListener
 	@Override
 	public void keyPressed(KeyEvent e) 
 	{
+		boolean collision=false;
+		int move=-1;
+		
 		if(e.getKeyCode()==KeyEvent.VK_UP)
-		{
+		{			
+			move=0;
 			
+			double step=10;
+			
+			rb.move(step);
+			repaint();
 		}
 		if(e.getKeyCode()==KeyEvent.VK_DOWN)
 		{
+			move=1;
 			
+			double step=-10;
+			
+			rb.move(step);
+			repaint();
 		}
 		if(e.getKeyCode()==KeyEvent.VK_LEFT)
 		{
+			move=2;
+			
 			int angle=-15;
-			
+				
 			System.out.println("LEFT");
-			
+				
 			rb.rotate(angle);
 			repaint();
 		}
 		if(e.getKeyCode()==KeyEvent.VK_RIGHT)
 		{
+			move=3;
+			
 			int angle=15;
-			
+				
 			System.out.println("RIGHT");
-			
+				
 			rb.rotate(angle);
 			repaint();
+		}
+		
+		for(int i=0; i<obstacles.length; i++)
+		{	
+			if(CollisionChecking.separatingAxisTheorem(rb, obstacles[i])
+					)
+			{
+				collision=true;
+			}
+		}
+		
+		if(collision)
+		{
+			if(move==0)
+			{
+				double step=-10;
+				
+				rb.move(step);
+				repaint();
+			}
+			if(move==1)
+			{
+				double step=10;
+				
+				rb.move(step);
+				repaint();
+			}
+			if(move==2)
+			{
+				int angle=15;
+				
+				rb.rotate(angle);
+				repaint();
+			}
+			if(move==3)
+			{
+				int angle=-15;
+				
+				rb.rotate(angle);
+				repaint();
+			}
 		}
 	}
 
@@ -843,22 +901,9 @@ public class CreateScene extends JPanel implements KeyListener, ActionListener
 	public void paintComponent(Graphics g)
 	{
 		super.paintComponent(g);
-		//System.out.println("1\t"+obstacles[0].getPolygon().xpoints[0]);
-		
-		//g.fillPolygon(new int[] {579, 572, 475, 438, 437}, new int[] {440, 564, 550, 503, 442}, 5);
 		
 		for(int i=0; i<numOfPolygons; i++)
-		{
-			/*if(obstacles[i].getCollision())
-			{
-				g.setColor(Color.red);
-			}
-			else
-			{
-				g.setColor(Color.black);
-			}
-			g.fillPolygon(obstacles[i].getPolygon());*/
-			
+		{			
 			if(obstacles[i].getCollision())
 			{
 				g.fillPolygon(obstacles[i].getPolygon());
@@ -867,16 +912,13 @@ public class CreateScene extends JPanel implements KeyListener, ActionListener
 			{
 				g.drawPolygon(obstacles[i].getPolygon());
 			}
-			
-			if(rb!=null)
-			{
-				g.fillPolygon(new int[] {(int)rb.getPoints()[0].getX(), (int)rb.getPoints()[1].getX(), (int)rb.getPoints()[2].getX(), 
-						(int)rb.getPoints()[3].getX()}, new int[] {(int)rb.getPoints()[0].getY(), (int)rb.getPoints()[1].getY(), 
-								(int)rb.getPoints()[2].getY(), (int)rb.getPoints()[3].getY()}, 4);
-				
-				//g.fillRect((int)rb.getPoints()[0].getX(), (int)rb.getPoints()[0].getY(), 
-						//(int)rb.getX(), (int)rb.getY());
-			}
+		}
+		
+		if(rb!=null)
+		{
+			g.fillPolygon(new int[] {(int)rb.getPoints()[0].getX(), (int)rb.getPoints()[1].getX(), (int)rb.getPoints()[2].getX(), 
+					(int)rb.getPoints()[3].getX()}, new int[] {(int)rb.getPoints()[0].getY(), (int)rb.getPoints()[1].getY(), 
+							(int)rb.getPoints()[2].getY(), (int)rb.getPoints()[3].getY()}, 4);
 		}
 	}
 	

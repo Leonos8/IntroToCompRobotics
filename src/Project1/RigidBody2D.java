@@ -48,6 +48,28 @@ public class RigidBody2D
 		return yDim;
 	}
 	
+	public void move(double step)
+	{
+		double xStep=step*Math.cos(Math.toRadians(angle));
+		double yStep=step*Math.sin(Math.toRadians(angle));
+		
+		Point2D[] newVertices=new Point2D[vertices.length];
+		
+		System.out.println("UP");
+		for(int i=0; i<vertices.length; i++)
+		{
+			System.out.println(xStep);
+			System.out.println(yStep);
+			newVertices[i]=new Point2D.Double(vertices[i].getX()+xStep, vertices[i].getY()+yStep);
+		}
+		
+		Point2D centerTmp=new Point2D.Double(center.getX()+xStep, center.getY()+yStep);
+		
+		this.center=centerTmp;
+		
+		setVertices(newVertices);
+	}
+	
 	public void rotate(double angle)
 	{
 		double centerX;
@@ -69,9 +91,8 @@ public class RigidBody2D
 			newVertices[i]=new Point2D.Double((rotatedX+center.getX()), (rotatedY+center.getY()));
 		}
 		
+		this.angle+=angle;
 		setVertices(newVertices);
-		
-		System.out.println(newVertices[0].getX()+"\t"+newVertices[0].getY());
 	}
 	
 	public void setAngle(double angle)
