@@ -84,89 +84,102 @@ public class PlanarArm extends JPanel implements KeyListener, ActionListener
         frame.setVisible(true);
 	}
 	
-	public void paintComponent(Graphics g)
+	private void drawJoint(Graphics2D g2, Point2D position, double radius)
+    {
+		g2.setColor(Color.blue);
+		g2.fillOval((int)(position.getX()-radius),
+            		(int)(position.getY()-radius),
+            		(int)(radius*2),
+            		(int)(radius*2));     
+    }
+
+	private void drawLink(Graphics2D g2, Point2D position1, Point2D position2, Rectangle rectangle, double radius)
 	{
-		super.paintComponent(g);
-		
-		Graphics2D g2=(Graphics2D)g;
-		
-		for(int i=0; i<cs.numOfPolygons; i++)
-		{			
-			if(cs.obstacles[i].getCollision())
-			{
-				g.fillPolygon(cs.obstacles[i].getPolygon());
-			}
-			else
-			{
-				g.drawPolygon(cs.obstacles[i].getPolygon());
-			}
-		}
-		
-		if(arm!=null)
-		{
-			g2.setColor(Color.blue);
-			g2.fillOval((int)(arm.joint1.getX()-(arm.jointRadius)), (int)(arm.joint1.getY()-(arm.jointRadius)), 
-					(int)(arm.jointRadius*2), (int)(arm.jointRadius*2));
-			
-			g2.setColor(Color.green);
-			g.fillRect((int)arm.rect1.getX(), (int)(arm.rect1.getY()-(arm.rect1.getHeight()/2)), (int)arm.rect1.getWidth(), (int)arm.rect1.getHeight());
-			
-			g2.setColor(Color.blue);
-			g2.fillOval((int)(arm.joint2.getX()-(arm.jointRadius)), (int)(arm.joint2.getY()-(arm.jointRadius)), 
-					(int)(arm.jointRadius*2), (int)(arm.jointRadius*2));
-			
-			g2.setColor(Color.green);
-			g.fillRect((int)arm.rect2.getX(), (int)(arm.rect2.getY()-(arm.rect2.getHeight()/2)), (int)arm.rect2.getWidth(), (int)arm.rect2.getHeight());
-			
-			g2.setColor(Color.blue);
-			g2.fillOval((int)(arm.joint3.getX()-(arm.jointRadius)), (int)(arm.joint3.getY()-(arm.jointRadius)), 
-					(int)(arm.jointRadius*2), (int)(arm.jointRadius*2));
-		}
-		
-		//g2.setStroke(new BasicStroke(3));
-		
-		//g2.fillOval(joints[0][0], joints[0][1], 15, 15);
-		//g2.drawLine(joints[0][0]+7, joints[0][1]+7, joints[1][0]+7, joints[1][1]+7);
-		
-		//g2.fillOval(joints[1][0], joints[1][1], 15, 15);
-		//g2.drawLine(joints[1][0]+7, joints[1][1]+7, joints[2][0]+7, joints[2][1]+7);
-		
-		//g2.fillOval(joints[2][0], joints[2][1], 15, 15);
+		g2.setColor(Color.green);
+
+		double delta_X=position2.getX()-position1.getX();
+		double delta_Y=position2.getY()-position1.getY();
+		double d=Math.sqrt(delta_X*delta_X+delta_Y*delta_Y);
+		double angle=Math.acos(delta_X/d);
+    
+		if(delta_Y<0)
+			angle=Math.PI*2-angle;
+
+		AffineTransform rotation = new AffineTransform();
+
+		rotation.rotate(angle, position1.getX(), position1.getY());
+
+		Rectangle link=new Rectangle((int)(position1.getX()+radius),
+									(int)(position1.getY()-rectangle.height/2),
+									rectangle.width,
+									rectangle.height);
+
+		Point2D[] points= {new Point2D.Double(link.x, link.y),
+                         	new Point2D.Double(link.x+link.width, link.y),
+                         	new Point2D.Double(link.x+link.width, link.y+link.height),
+                         	new Point2D.Double(link.x, link.y+link.height)};
+
+		Point2D[] rotated_points= new Point2D[4];
+		int[] X_points=new int[4];
+		int[] Y_points=new int[4];
+
+		for(int i=0; i<4; i++)
+        {
+			rotated_points[i]=rotation.transform(points[i], null);
+			X_points[i]=(int)rotated_points[i].getX();
+			Y_points[i]=(int)rotated_points[i].getY();
+        }
+
+		g2.fillPolygon(X_points, Y_points, 4);
+    }
+	
+	private boolean isPossiblePosition(Point2D joint1_position, Point2D new_joint2_position, Point2D new_joint3_position)
+	{
+		// TODO !!!
+
+		// Add Collision Checking here !!!
+		return true;  // empty default checking allowing every position. Change it !
 	}
+	
+	public void paintComponent(Graphics g)
+    {
+		super.paintComponent(g);
+
+        Graphics2D g2=(Graphics2D)g;
+
+        for(int i=0; i<cs.numOfPolygons; i++)
+        {           
+            if(cs.obstacles[i].getCollision())
+            {
+                g.fillPolygon(cs.obstacles[i].getPolygon());
+            }
+            else
+            {
+                g.drawPolygon(cs.obstacles[i].getPolygon());
+            }
+        }
+
+        if(arm!=null)
+        {
+        	Point2D joint1_position=arm.joint1;
+        	Point2D joint2_position=arm.joint2;
+        	Point2D joint3_position=arm.joint3;
+
+        	drawJoint(g2, joint1_position, arm.jointRadius);
+        	drawLink(g2, joint1_position, joint2_position, arm.rect1, arm.jointRadius);
+        	
+        	drawJoint(g2, joint2_position, arm.jointRadius);
+        	drawLink(g2, joint2_position, joint3_position, arm.rect2, arm.jointRadius);
+
+        	drawJoint(g2, joint3_position, arm.jointRadius);
+        }
+    }
 	
 	public void createPlanarArm()
 	{
 		arm=new Arm();
 		
 		repaint();
-	}
-	
-	public void rotate(double angle, Rectangle rect)
-	{
-		double centerX;
-		double centerY;
-		
-		double rotatedX;
-		double rotatedY;
-		
-		Point2D[] newVertices=new Point2D[vertices.length];
-		
-		
-		
-		
-		for(int i=0; i<vertices.length; i++)
-		{
-			centerX=vertices[i].getX()-center.getX();
-			centerY=vertices[i].getY()-center.getY();
-			
-			rotatedX=centerX*Math.cos(Math.toRadians(angle))-centerY*Math.sin(Math.toRadians(angle));
-			rotatedY=centerX*Math.sin(Math.toRadians(angle))+centerY*Math.cos(Math.toRadians(angle));
-			
-			newVertices[i]=new Point2D.Double((rotatedX+center.getX()), (rotatedY+center.getY()));
-		}
-		
-		this.angle+=angle;
-		setVertices(newVertices);
 	}
 
 	@Override
@@ -181,87 +194,169 @@ public class PlanarArm extends JPanel implements KeyListener, ActionListener
 		
 	}
 
-	@Override
-	public void keyPressed(KeyEvent e) 
-	{		
+	public void keyPressed(KeyEvent e)
+    {
 		int key=e.getKeyCode();
-		
-		if(key==KeyEvent.VK_1)
-		{
-			int angle=-15;
-			
-			System.out.println('t');
-			
-			Point2D result = new Point2D.Double();
-		    AffineTransform rotation = new AffineTransform();
-		    double angleInRadians = (angle * Math.PI / 180);
-		    rotation.rotate(angleInRadians, arm.getJoint1().getX(), arm.getJoint1().getY());
-		    rotation.transform(new Point2D.Double(arm.getJoint2().getX(), arm.getJoint2().getY()), result);
-		    
-		    arm.setJoint2(result);
-			
-		    Point2D result2 = new Point2D.Double();
-		    AffineTransform rotation2 = new AffineTransform();
-		    double angleInRadians2 = (angle * Math.PI / 180);
-		    rotation2.rotate(angleInRadians2, arm.getJoint1().getX(), arm.getJoint1().getY());
-		    rotation.transform(new Point2D.Double(arm.getJoint3().getX(), arm.getJoint3().getY()), result2);
-		    
-		    arm.setJoint3(result2);
-		    
-		    repaint();
-		}
-		if(key==KeyEvent.VK_2)
-		{
-			int angle=-15;
-			
-			Point2D result = new Point2D.Double();
-		    AffineTransform rotation = new AffineTransform();
-		    double angleInRadians = (angle * Math.PI / 180);
-		    rotation.rotate(angleInRadians, arm.getJoint2().getX(), arm.getJoint2().getY());
-		    rotation.transform(new Point2D.Double(arm.getJoint3().getX(), arm.getJoint3().getY()), result);
-		    
-		    arm.setJoint3(result);
-		    
-		    repaint();
-		}
-		if(key==KeyEvent.VK_4)
-		{
-			int angle=15;
-			
-			Point2D result = new Point2D.Double();
-		    AffineTransform rotation = new AffineTransform();
-		    double angleInRadians = (angle * Math.PI / 180);
-		    rotation.rotate(angleInRadians, arm.getJoint1().getX(), arm.getJoint1().getY());
-		    rotation.transform(new Point2D.Double(arm.getJoint2().getX(), arm.getJoint2().getY()), result);
-		    
-		    arm.setJoint2(result);
-						
-		    Point2D result2 = new Point2D.Double();
-		    AffineTransform rotation2 = new AffineTransform();
-		    double angleInRadians2 = (angle * Math.PI / 180);
-		    rotation2.rotate(angleInRadians2, arm.getJoint1().getX(), arm.getJoint1().getY());
-		    rotation.transform(new Point2D.Double(arm.getJoint3().getX(), arm.getJoint3().getY()), result2);
-		    
-		    arm.setJoint3(result2);
-		    
-		    repaint();
-		}
-		if(key==KeyEvent.VK_5)
-		{
-			int angle=15;
-			
-			Point2D result = new Point2D.Double();
-		    AffineTransform rotation = new AffineTransform();
-		    double angleInRadians = (angle * Math.PI / 180);
-		    rotation.rotate(angleInRadians, arm.getJoint2().getX(), arm.getJoint2().getY());
-		    rotation.transform(new Point2D.Double(arm.getJoint3().getX(), arm.getJoint3().getY()), result);
-		    
-		    arm.setJoint3(result);
-		    
-		    repaint();
-		}
-	}
+    
+        if(key==KeyEvent.VK_1)
+        {
+            int angle=-15;
+            double angleInRadians = Math.toRadians(angle);
 
+            Point2D joint1_position=new Point2D.Double(arm.getJoint1().getX(), arm.getJoint1().getY());
+            Point2D joint2_position=new Point2D.Double(arm.getJoint2().getX(), arm.getJoint2().getY());
+            Point2D joint3_position=new Point2D.Double(arm.getJoint3().getX(), arm.getJoint3().getY());
+
+            AffineTransform rotation = new AffineTransform();
+            rotation.rotate(angleInRadians, joint1_position.getX(), joint1_position.getY());
+
+            Point2D new_joint2_position = rotation.transform(joint2_position, null);
+            Point2D new_joint3_position = rotation.transform(joint3_position, null);
+
+            if(isPossiblePosition(joint1_position, new_joint2_position, new_joint3_position))
+            {
+            	arm.setJoint2(new_joint2_position);
+            	arm.setJoint3(new_joint3_position);
+            }
+            
+            repaint();
+        }
+
+        if(key==KeyEvent.VK_2)
+        {
+        	int angle=-15;
+        	double angleInRadians = Math.toRadians(angle);
+
+        	Point2D joint1_position=new Point2D.Double(arm.getJoint1().getX(), arm.getJoint1().getY());
+        	Point2D joint2_position=new Point2D.Double(arm.getJoint2().getX(), arm.getJoint2().getY());
+        	Point2D joint3_position=new Point2D.Double(arm.getJoint3().getX(), arm.getJoint3().getY());
+
+        	AffineTransform rotation = new AffineTransform();
+        	rotation.rotate(angleInRadians, joint2_position.getX(), joint2_position.getY());
+
+        	Point2D new_joint3_position = rotation.transform(joint3_position, null);
+
+        	if(isPossiblePosition(joint1_position, joint2_position, new_joint3_position))
+        	{
+        		arm.setJoint3(new_joint3_position);
+        	}
+
+        	repaint();
+        }
+        if(key==KeyEvent.VK_3)
+        {
+        	Point2D joint1_position=new Point2D.Double(arm.getJoint1().getX(), arm.getJoint1().getY());
+        	Point2D joint2_position=new Point2D.Double(arm.getJoint2().getX(), arm.getJoint2().getY());
+        	Point2D joint3_position=new Point2D.Double(arm.getJoint3().getX(), arm.getJoint3().getY());
+        	
+        	int angle=15;
+        	double angleInRadians = Math.toRadians(angle);
+
+        	AffineTransform rotation1 = new AffineTransform();     
+        	rotation1.rotate(angleInRadians, joint2_position.getX(), joint2_position.getY());
+
+        	Point2D new_joint3_position = rotation1.transform(joint3_position, null);
+        	
+        	angle=-angle;
+        	angleInRadians = Math.toRadians(angle);
+
+        	AffineTransform rotation2 = new AffineTransform();     
+        	rotation2.rotate(angleInRadians, joint1_position.getX(), joint1_position.getY());
+
+        	Point2D new_joint2_position = rotation2.transform(joint2_position, null);
+        	new_joint3_position = rotation2.transform(new_joint3_position, null);
+
+        	if(isPossiblePosition(joint1_position, new_joint2_position, new_joint3_position))
+        	{
+        		arm.setJoint2(new_joint2_position);
+        		arm.setJoint3(new_joint3_position);
+        	}
+
+        	repaint();
+
+        }
+
+        if(key==KeyEvent.VK_4)
+        {
+        	int angle=15;
+        	double angleInRadians = Math.toRadians(angle);
+
+        	Point2D joint1_position=new Point2D.Double(arm.getJoint1().getX(), arm.getJoint1().getY());
+        	Point2D joint2_position=new Point2D.Double(arm.getJoint2().getX(), arm.getJoint2().getY());
+        	Point2D joint3_position=new Point2D.Double(arm.getJoint3().getX(), arm.getJoint3().getY());
+
+        	AffineTransform rotation = new AffineTransform();
+        	rotation.rotate(angleInRadians, joint1_position.getX(), joint1_position.getY());
+
+        	Point2D new_joint2_position = rotation.transform(joint2_position, null);
+        	Point2D new_joint3_position = rotation.transform(joint3_position, null);
+
+        	if(isPossiblePosition(joint1_position, new_joint2_position, new_joint3_position))
+        	{
+        		arm.setJoint2(new_joint2_position);
+        		arm.setJoint3(new_joint3_position);
+        	}
+
+        	repaint();
+
+        }
+        if(key==KeyEvent.VK_5)
+        {
+
+        	int angle=15;
+        	double angleInRadians = Math.toRadians(angle);
+
+        	Point2D joint1_position=new Point2D.Double(arm.getJoint1().getX(), arm.getJoint1().getY());
+        	Point2D joint2_position=new Point2D.Double(arm.getJoint2().getX(), arm.getJoint2().getY());
+        	Point2D joint3_position=new Point2D.Double(arm.getJoint3().getX(), arm.getJoint3().getY());
+
+        	AffineTransform rotation = new AffineTransform();
+        	rotation.rotate(angleInRadians, joint2_position.getX(), joint2_position.getY());
+
+        	Point2D new_joint3_position = rotation.transform(joint3_position, null);
+
+        	if(isPossiblePosition(joint1_position, joint2_position, new_joint3_position))
+        	{
+        		arm.setJoint3(new_joint3_position);
+        	}
+
+        	repaint();
+        }
+
+        if(key==KeyEvent.VK_6)
+        {
+        	Point2D joint1_position=new Point2D.Double(arm.getJoint1().getX(), arm.getJoint1().getY());
+        	Point2D joint2_position=new Point2D.Double(arm.getJoint2().getX(), arm.getJoint2().getY());
+        	Point2D joint3_position=new Point2D.Double(arm.getJoint3().getX(), arm.getJoint3().getY());
+
+        	int angle=-15;
+        	double angleInRadians = Math.toRadians(angle);
+
+        	AffineTransform rotation1 = new AffineTransform();     
+        	rotation1.rotate(angleInRadians, joint2_position.getX(), joint2_position.getY());
+
+        	Point2D new_joint3_position = rotation1.transform(joint3_position, null);
+
+        	angle=-angle;
+        	angleInRadians = Math.toRadians(angle);
+
+        	AffineTransform rotation2 = new AffineTransform();     
+        	rotation2.rotate(angleInRadians, joint1_position.getX(), joint1_position.getY());
+
+        	Point2D new_joint2_position = rotation2.transform(joint2_position, null);
+        	new_joint3_position = rotation2.transform(new_joint3_position, null);
+
+        	if(isPossiblePosition(joint1_position, new_joint2_position, new_joint3_position))
+        	{
+        		arm.setJoint2(new_joint2_position);
+        		arm.setJoint3(new_joint3_position);
+        	}
+
+        	repaint();
+        }
+
+    }
+    
 	@Override
 	public void keyReleased(KeyEvent e) {
 		// TODO Auto-generated method stub

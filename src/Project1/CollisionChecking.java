@@ -27,6 +27,7 @@ public class CollisionChecking
 		
 		for(int a=0; a<p1.length; a++)
 		{
+			//Index+1, but making sure that the indices wrap around
 			int b=(a+1)%p1.length;
 			
 			double[] axisProj=new double[] {-(p1[b].getY()-p1[a].getY()), p1[b].getX()-p1[a].getX()};
