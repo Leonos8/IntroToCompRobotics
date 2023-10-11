@@ -715,12 +715,20 @@ public class CreateScene extends JPanel implements KeyListener, ActionListener
 			repaint();
 		}
 		
-		for(int i=0; i<obstacles.length; i++)
-		{	
-			if(CollisionChecking.separatingAxisTheorem(rb, obstacles[i])
-					)
-			{
-				collision=true;
+		/*if(rb.getX()>790 || rb.getX()<10 || rb.getY()>790 || rb.getX()<10)
+		{
+			collision=true;
+		}*/
+		
+		if(collision!=true)
+		{
+			for(int i=0; i<obstacles.length; i++)
+			{	
+				if(CollisionChecking.separatingAxisTheorem(rb, obstacles[i])
+						)
+				{
+					collision=true;
+				}
 			}
 		}
 		
