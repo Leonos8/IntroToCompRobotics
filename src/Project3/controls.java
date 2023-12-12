@@ -191,35 +191,28 @@ public class controls extends JPanel
 	
 	public double[][] generateControlSequence()
 	{
-		/*System.out.println("HI");
-		verts=robot.getVertices();
-		Point2D[] vertices;
-		double[][] controlSequence=new double[200][3];
-		
-		Point2D startPosition=new Point2D.Double(0, 0);
-		double startDirection=0;*/
+		double[][] controlSequence=new double[200][2];
 		
 		// Input startPosition of the center of the robot,
 		// Input startDirection of the robot
 		// Input width and the height of the robot
 		double direction=robot.getQ()[2];
+		direction=Math.toRadians(direction);
+		
 		Point2D center=new Point2D.Double(robot.getQ()[0], robot.getQ()[1]);
 
 		// Generate vertices of the robot as offsets from the center point
 		// Robot's central point is what we track
 
 
-		// Generate vertex[i] as an offset from ceneter point;
+		// Generate vertex[i] as an offset from center point;
 		Point2D[] vertex=robot.getVertices();
 		
-		/*vertex[0]=new Point2D.Double(center.getX()-robot.getW()/2,center.getY()+robot.getL()/2);
-		vertex[1]=new Point2D.Double(center.getX()+robot.getW()/2,center.getY()+robot.getL()/2);
-		vertex[2]=new Point2D.Double(center.getX()+robot.getW()/2,center.getY()-robot.getL()/2);
-		vertex[3]=new Point2D.Double(center.getX()-robot.getW()/2,center.getY()-robot.getL()/2);*/
 		double wheelCenterDistance=Math.sqrt(robot.getW()*robot.getW()+robot.getL()*robot.getL())/2;
 		double[] wheelCenterAngle=new double[4];
 		for(int i=0; i<4; i++)
 		{
+			System.out.println("NAN TEST"+wheelCenterDistance);//vertex[i].getX());///wheelCenterDistance);
 		    wheelCenterAngle[i]=Math.acos(vertex[i].getX()/wheelCenterDistance);
 		}
 
@@ -227,6 +220,7 @@ public class controls extends JPanel
 		// Start a loop that generates steps
 		
 		int MAX_NUMBER_OF_TRIALS=20;
+		int sequence=0;
 		for(int step=0; step<10; step++)
 		{
 			// Try to make 1 movement step
@@ -235,14 +229,17 @@ public class controls extends JPanel
 		    {
 				// generate new direction and movement
 				double angle=(Math.random()*360)-180;
-				double distance=(Math.random()*400)-200;
+				angle=Math.toRadians(angle);
+				double velocity=(Math.random()*400)-200;
 				
 				double newDirection=direction+angle;
 				//Point2D newPosition=new Point2D.Double(startPosition.getX(), startPosition.getY());
 
+				
+				
 				// Move CENTER to new location
-				Point2D newCenter=new Point2D.Double(center.getX()+distance*Math.cos(newDirection),
-												center.getY()+distance*Math.sin(newDirection));
+				Point2D newCenter=new Point2D.Double(center.getX()+velocity*Math.cos(newDirection),
+												center.getY()+velocity*Math.sin(newDirection));
 
 				// create a new POTENTIAL position of vertices
 				Point2D[] newVertex=new Point2D[4];
@@ -250,21 +247,39 @@ public class controls extends JPanel
 				// create rotated new vertices
 				for(int i=0; i<4; i++)
 		        {
+					System.out.println("Hello1 "+newCenter.getX());
+					System.out.println("Hello2 "+wheelCenterAngle[i]);
+					System.out.println("Hello3 "+newCenter.getY());
+					System.out.println("Hello4 "+wheelCenterDistance*Math.sin(newDirection+wheelCenterAngle[i]));
+
 					newVertex[i]=new Point2D.Double(newCenter.getX()+wheelCenterDistance*Math.cos(newDirection+wheelCenterAngle[i]),
 		                                   		newCenter.getY()+wheelCenterDistance*Math.sin(newDirection+wheelCenterAngle[i]));
+		        
+					System.out.println("BYE "+newVertex[i].getX()+"\t"+newVertex[i].getY());
+
 		        }
 
-				// Check if you can move to new center and new vertices without bumping into obstacle
+				// Check if you can move to new center and new vertices without 
+				//bumping into obstacle
 				boolean canMove=collides(vertex, newVertex);
 				if(canMove)
 		        {
 					center=newCenter;
 					vertex=newVertex;
 					direction=newDirection;
+					
+					direction=Math.toDegrees(direction);
+					
+					for(int seq=sequence*10; seq<(sequence*10)+10; seq++)
+					{
+						controlSequence[seq]=new double[] 
+								{velocity, Math.toDegrees(angle)};
+					}
 
 					break;
 		        }
 				number_of_trials++;
+				System.out.println(number_of_trials);
 				
 				if(number_of_trials>=MAX_NUMBER_OF_TRIALS)
 				{
@@ -273,67 +288,6 @@ public class controls extends JPanel
 					
 		    }
 		}
-		
-		/*for(int i=0; i<200; i+=20)
-		{
-			//double[] u=new double[3];
-			double[] movement=new double[2];
-			
-			double angle=(Math.random()*360)-180;
-			double distance=(Math.random()*400)-200;
-			
-			double newDirection=startDirection+angle;
-			
-			Point2D newPosition=new Point2D.Double(startPosition.getX(), startPosition.getY());
-			
-			
-			/*do {
-				/*double angle=(Math.random()*360)-180;
-				if(angle==0)
-				{
-					angle+=.00001;
-				}
-				double velocity=200*(1/Math.cbrt(angle)); //1m is 400. so .5 is 200
-				double angularVelocity=360*(1/Math.cbrt(angle));
-				
-				System.out.println(angle+"\t"+velocity+"\t"+angularVelocity);
-				
-				u=new double[] {velocity, angularVelocity, angle};
-				
-				double vx=u[0]*Math.cos(Math.toRadians(u[2]));
-				double vy=u[0]*Math.sin(Math.toRadians(u[2]));
-				
-				vertices=new Point2D.Double[] {
-						new Point2D.Double(verts[0].getX()+vx, 
-								verts[0].getY()+vy),
-						new Point2D.Double(verts[1].getX()+vx, 
-								verts[1].getY()+vy),
-						new Point2D.Double(verts[2].getX()+vx, 
-								verts[2].getY()+vy),
-						new Point2D.Double(verts[3].getX()+vx, 
-								verts[3].getY()+vy)};
-			
-				boolean collides=collides(verts, u);
-				
-				if(collides==true)
-				{
-					vertices=new Point2D.Double[] {
-							new Point2D.Double(verts[0].getX()-vx, 
-									verts[0].getY()-vy),
-							new Point2D.Double(verts[1].getX()-vx, 
-									verts[1].getY()-vy),
-							new Point2D.Double(verts[2].getX()-vx, 
-									verts[2].getY()-vy),
-							new Point2D.Double(verts[3].getX()-vx, 
-									verts[3].getY()-vy)};
-				}
-			}while(collides(vertices, u));
-			
-			for(int j=i; j<i+20; j++)
-			{
-				controlSequence[j]=u;
-			}
-		}*/
 		
 		return controlSequence;
 	}
