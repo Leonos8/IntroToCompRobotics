@@ -302,7 +302,7 @@ public class controls extends JPanel
 		
 		double vx=u[0]*Math.cos(Math.toRadians(u[2]));
 		double vy=u[0]*Math.sin(Math.toRadians(u[2]));
-		
+		 
 		Point2D[] vertices=new Point2D.Double[] {
 				new Point2D.Double(tmpVertices[0].getX()+vx, tmpVertices[0].getY()+vy),
 				new Point2D.Double(tmpVertices[1].getX()+vx, tmpVertices[1].getY()+vy),
