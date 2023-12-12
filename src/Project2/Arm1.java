@@ -38,7 +38,7 @@ public class Arm1 extends JPanel implements KeyListener, ActionListener
 	public static void main(String[] args)
 	{
 		Arm1 pa=new Arm1();
-		
+		//TODO take file input
 		pa.run();
 	}
 	
@@ -46,15 +46,14 @@ public class Arm1 extends JPanel implements KeyListener, ActionListener
 	{
 		cs=new CreateScene();
 		cs.run();
-		//cs.getInput();
 		createPanel();
 		if(!cs.fromFile)
 		{
 			cs.generatePolygonArray();
 		}
 		cs.checkObstacleCollisions();
-		
 		createPlanarArm();
+		repaint();
 	}
 	
 	public void createPanel()
@@ -142,7 +141,7 @@ public class Arm1 extends JPanel implements KeyListener, ActionListener
 		double d=Math.sqrt(delta_X*delta_X+delta_Y*delta_Y);
 
 		AffineTransform rotation = new AffineTransform();
-
+		
 		angle=Math.toRadians(angle);
 		rotation.rotate(angle, position1.getX(), position1.getY());
 		
@@ -219,17 +218,17 @@ public class Arm1 extends JPanel implements KeyListener, ActionListener
 
         	drawJoint(g2, joint12_position, arm.jointRadius);
         	/////////////////////
-        	drawLink(g2, joint0_position, joint21_position, arm.rect0_21, arm.jointRadius, 225);
+        	drawLink(g2, joint0_position, joint21_position, arm.rect0_21, arm.jointRadius, arm.arm21Angle);
         	
         	drawJoint(g2, joint21_position, arm.jointRadius);
-        	drawLink(g2, joint21_position, joint22_position, arm.rect21_22, arm.jointRadius, 225);
+        	drawLink(g2, joint21_position, joint22_position, arm.rect21_22, arm.jointRadius, arm.arm22Angle);
 
         	drawJoint(g2, joint22_position, arm.jointRadius);
         	/////////////////////
-        	drawLink(g2, joint0_position, joint31_position, arm.rect0_31, arm.jointRadius, 315);
+        	drawLink(g2, joint0_position, joint31_position, arm.rect0_31, arm.jointRadius, arm.arm31Angle);
         	
         	drawJoint(g2, joint31_position, arm.jointRadius);
-        	drawLink(g2, joint31_position, joint32_position, arm.rect31_32, arm.jointRadius, 315);
+        	drawLink(g2, joint31_position, joint32_position, arm.rect31_32, arm.jointRadius, arm.arm32Angle);
 
         	drawJoint(g2, joint32_position, arm.jointRadius);
         }
@@ -262,6 +261,59 @@ public class Arm1 extends JPanel implements KeyListener, ActionListener
         {
             int angle=-15;
             double angleInRadians = Math.toRadians(angle);
+  
+            arm.setArm11Angle(arm.getArm11Angle()+angle);
+            
+            Point2D joint0_position=new Point2D.Double(arm.getJoint0().getX(), arm.getJoint0().getY());
+            Point2D joint11_position=new Point2D.Double(arm.getJoint11().getX(), arm.getJoint11().getY());
+            Point2D joint12_position=new Point2D.Double(arm.getJoint12().getX(), arm.getJoint12().getY());
+
+            AffineTransform rotation = new AffineTransform();
+            rotation.rotate(angleInRadians, joint0_position.getX(), joint0_position.getY());
+
+            Point2D new_joint11_position = rotation.transform(joint11_position, null);
+            Point2D new_joint12_position = rotation.transform(joint12_position, null);
+
+            if(isPossiblePosition(joint0_position, new_joint11_position, new_joint12_position))
+            {
+            	arm.setJoint11(new_joint11_position);
+            	arm.setJoint12(new_joint12_position);
+            }
+            
+            repaint();
+        }
+
+        if(key==KeyEvent.VK_2)
+        {
+        	int angle=-15;
+        	double angleInRadians = Math.toRadians(angle);
+
+        	arm.setArm12Angle(arm.getArm12Angle()+angle);
+        	
+        	Point2D joint0_position=new Point2D.Double(arm.getJoint0().getX(), arm.getJoint0().getY());
+        	Point2D joint11_position=new Point2D.Double(arm.getJoint11().getX(), arm.getJoint11().getY());
+        	Point2D joint12_position=new Point2D.Double(arm.getJoint12().getX(), arm.getJoint12().getY());
+
+        	AffineTransform rotation = new AffineTransform();
+        	rotation.rotate(angleInRadians, joint11_position.getX(), joint11_position.getY());
+
+        	Point2D new_joint3_position = rotation.transform(joint12_position, null);
+
+        	if(isPossiblePosition(joint0_position, joint11_position, new_joint3_position))
+        	{
+        		arm.setJoint12(new_joint3_position);
+        	}
+
+        	repaint();
+        }
+        if(key==KeyEvent.VK_3)
+        {
+            int angle=15;
+            double angleInRadians = Math.toRadians(angle);
+            
+            arm.setArm11Angle(arm.getArm11Angle()+angle);
+            
+            System.out.println(arm.getArm11Angle());
 
             Point2D joint0_position=new Point2D.Double(arm.getJoint0().getX(), arm.getJoint0().getY());
             Point2D joint11_position=new Point2D.Double(arm.getJoint11().getX(), arm.getJoint11().getY());
@@ -282,10 +334,12 @@ public class Arm1 extends JPanel implements KeyListener, ActionListener
             repaint();
         }
 
-        if(key==KeyEvent.VK_2)
+        if(key==KeyEvent.VK_4)
         {
-        	int angle=-15;
+        	int angle=15;
         	double angleInRadians = Math.toRadians(angle);
+        	
+        	arm.setArm12Angle(arm.getArm12Angle()+angle);
 
         	Point2D joint0_position=new Point2D.Double(arm.getJoint0().getX(), arm.getJoint0().getY());
         	Point2D joint11_position=new Point2D.Double(arm.getJoint11().getX(), arm.getJoint11().getY());
@@ -303,118 +357,208 @@ public class Arm1 extends JPanel implements KeyListener, ActionListener
 
         	repaint();
         }
-        if(key==KeyEvent.VK_4)
+        if(key==KeyEvent.VK_Q)
         {
+            int angle=-15;
+            double angleInRadians = Math.toRadians(angle);
+            
+            arm.setArm21Angle(arm.getArm21Angle()+angle);
+            arm.setArm22Angle(arm.getArm22Angle()+angle);
+            
+            Point2D joint0_position=new Point2D.Double(arm.getJoint0().getX(), arm.getJoint0().getY());
+            Point2D joint21_position=new Point2D.Double(arm.getJoint21().getX(), arm.getJoint21().getY());
+            Point2D joint22_position=new Point2D.Double(arm.getJoint22().getX(), arm.getJoint22().getY());
+
+            AffineTransform rotation = new AffineTransform();
+            rotation.rotate(angleInRadians, joint0_position.getX(), joint0_position.getY());
+
+            Point2D new_joint21_position = rotation.transform(joint21_position, null);
+            Point2D new_joint22_position = rotation.transform(joint22_position, null);
+
+            if(isPossiblePosition(joint0_position, new_joint21_position, new_joint22_position))
+            {
+            	arm.setJoint21(new_joint21_position);
+            	arm.setJoint22(new_joint22_position);
+            }
+            
+            repaint();
+        }
+
+        if(key==KeyEvent.VK_W)
+        {
+        	int angle=-15;
+        	double angleInRadians = Math.toRadians(angle);
+        	
+        	arm.setArm22Angle(arm.getArm22Angle()+angle);
+
         	Point2D joint0_position=new Point2D.Double(arm.getJoint0().getX(), arm.getJoint0().getY());
         	Point2D joint21_position=new Point2D.Double(arm.getJoint21().getX(), arm.getJoint21().getY());
         	Point2D joint22_position=new Point2D.Double(arm.getJoint22().getX(), arm.getJoint22().getY());
-        	
-        	int angle=15;
-        	double angleInRadians = Math.toRadians(angle);
 
-        	AffineTransform rotation1 = new AffineTransform();     
-        	rotation1.rotate(angleInRadians, joint21_position.getX(), joint21_position.getY());
+        	AffineTransform rotation = new AffineTransform();
+        	rotation.rotate(angleInRadians, joint21_position.getX(), joint21_position.getY());
 
-        	Point2D new_joint3_position = rotation1.transform(joint22_position, null);
-        	
-        	angle=-angle;
-        	angleInRadians = Math.toRadians(angle);
+        	Point2D new_joint22_position = rotation.transform(joint22_position, null);
 
-        	AffineTransform rotation2 = new AffineTransform();     
-        	rotation2.rotate(angleInRadians, joint0_position.getX(), joint0_position.getY());
-
-        	Point2D new_joint2_position = rotation2.transform(joint21_position, null);
-        	new_joint3_position = rotation2.transform(new_joint3_position, null);
-
-        	if(isPossiblePosition(joint0_position, new_joint2_position, new_joint3_position))
+        	if(isPossiblePosition(joint0_position, joint21_position, new_joint22_position))
         	{
-        		arm.setJoint11(new_joint2_position);
-        		arm.setJoint12(new_joint3_position);
+        		arm.setJoint22(new_joint22_position);
         	}
 
         	repaint();
+        }
+        if(key==KeyEvent.VK_E)
+        {
+            int angle=+15;
+            double angleInRadians = Math.toRadians(angle);
+            
+            arm.setArm21Angle(arm.getArm21Angle()+angle);
+            arm.setArm22Angle(arm.getArm22Angle()+angle);
+            
+            Point2D joint0_position=new Point2D.Double(arm.getJoint0().getX(), arm.getJoint0().getY());
+            Point2D joint21_position=new Point2D.Double(arm.getJoint21().getX(), arm.getJoint21().getY());
+            Point2D joint22_position=new Point2D.Double(arm.getJoint22().getX(), arm.getJoint22().getY());
 
+            AffineTransform rotation = new AffineTransform();
+            rotation.rotate(angleInRadians, joint0_position.getX(), joint0_position.getY());
+
+            Point2D new_joint21_position = rotation.transform(joint21_position, null);
+            Point2D new_joint22_position = rotation.transform(joint22_position, null);
+
+            if(isPossiblePosition(joint0_position, new_joint21_position, new_joint22_position))
+            {
+            	arm.setJoint21(new_joint21_position);
+            	arm.setJoint22(new_joint22_position);
+            }
+            
+            repaint();
         }
 
-        if(key==KeyEvent.VK_5)
+        if(key==KeyEvent.VK_R)
         {
-        	int angle=15;
+        	int angle=+15;
         	double angleInRadians = Math.toRadians(angle);
+        	
+        	arm.setArm22Angle(arm.getArm22Angle()+angle);
 
-        	Point2D joint1_position=new Point2D.Double(arm.getJoint0().getX(), arm.getJoint0().getY());
+        	Point2D joint0_position=new Point2D.Double(arm.getJoint0().getX(), arm.getJoint0().getY());
         	Point2D joint21_position=new Point2D.Double(arm.getJoint21().getX(), arm.getJoint21().getY());
         	Point2D joint22_position=new Point2D.Double(arm.getJoint22().getX(), arm.getJoint22().getY());
 
         	AffineTransform rotation = new AffineTransform();
-        	rotation.rotate(angleInRadians, joint1_position.getX(), joint1_position.getY());
+        	rotation.rotate(angleInRadians, joint21_position.getX(), joint21_position.getY());
 
-        	Point2D new_joint2_position = rotation.transform(joint21_position, null);
-        	Point2D new_joint3_position = rotation.transform(joint22_position, null);
+        	Point2D new_joint22_position = rotation.transform(joint22_position, null);
 
-        	if(isPossiblePosition(joint1_position, new_joint2_position, new_joint3_position))
+        	if(isPossiblePosition(joint0_position, joint21_position, new_joint22_position))
         	{
-        		arm.setJoint11(new_joint2_position);
-        		arm.setJoint12(new_joint3_position);
-        	}
-
-        	repaint();
-
-        }
-        if(key==KeyEvent.VK_7)
-        {
-
-        	int angle=15;
-        	double angleInRadians = Math.toRadians(angle);
-
-        	Point2D joint1_position=new Point2D.Double(arm.getJoint0().getX(), arm.getJoint0().getY());
-        	Point2D joint2_position=new Point2D.Double(arm.getJoint11().getX(), arm.getJoint11().getY());
-        	Point2D joint3_position=new Point2D.Double(arm.getJoint12().getX(), arm.getJoint12().getY());
-
-        	AffineTransform rotation = new AffineTransform();
-        	rotation.rotate(angleInRadians, joint2_position.getX(), joint2_position.getY());
-
-        	Point2D new_joint3_position = rotation.transform(joint3_position, null);
-
-        	if(isPossiblePosition(joint1_position, joint2_position, new_joint3_position))
-        	{
-        		arm.setJoint12(new_joint3_position);
+        		arm.setJoint22(new_joint22_position);
         	}
 
         	repaint();
         }
-
-        if(key==KeyEvent.VK_8)
+        if(key==KeyEvent.VK_A)
         {
-        	Point2D joint1_position=new Point2D.Double(arm.getJoint0().getX(), arm.getJoint0().getY());
-        	Point2D joint2_position=new Point2D.Double(arm.getJoint11().getX(), arm.getJoint11().getY());
-        	Point2D joint3_position=new Point2D.Double(arm.getJoint12().getX(), arm.getJoint12().getY());
+            int angle=-15;
+            double angleInRadians = Math.toRadians(angle);
+            
+            arm.setArm31Angle(arm.getArm31Angle()+angle);
+            arm.setArm32Angle(arm.getArm32Angle()+angle);
+            
+            Point2D joint0_position=new Point2D.Double(arm.getJoint0().getX(), arm.getJoint0().getY());
+            Point2D joint31_position=new Point2D.Double(arm.getJoint31().getX(), arm.getJoint31().getY());
+            Point2D joint32_position=new Point2D.Double(arm.getJoint32().getX(), arm.getJoint32().getY());
 
+            AffineTransform rotation = new AffineTransform();
+            rotation.rotate(angleInRadians, joint0_position.getX(), joint0_position.getY());
+
+            Point2D new_joint31_position = rotation.transform(joint31_position, null);
+            Point2D new_joint32_position = rotation.transform(joint32_position, null);
+
+            if(isPossiblePosition(joint0_position, new_joint31_position, new_joint32_position))
+            {
+            	arm.setJoint31(new_joint31_position);
+            	arm.setJoint32(new_joint32_position);
+            }
+            
+            repaint();
+        }
+
+        if(key==KeyEvent.VK_S)
+        {
         	int angle=-15;
         	double angleInRadians = Math.toRadians(angle);
+        	
+        	arm.setArm32Angle(arm.getArm32Angle()+angle);
 
-        	AffineTransform rotation1 = new AffineTransform();     
-        	rotation1.rotate(angleInRadians, joint2_position.getX(), joint2_position.getY());
+        	Point2D joint0_position=new Point2D.Double(arm.getJoint0().getX(), arm.getJoint0().getY());
+        	Point2D joint31_position=new Point2D.Double(arm.getJoint31().getX(), arm.getJoint31().getY());
+        	Point2D joint32_position=new Point2D.Double(arm.getJoint32().getX(), arm.getJoint32().getY());
 
-        	Point2D new_joint3_position = rotation1.transform(joint3_position, null);
+        	AffineTransform rotation = new AffineTransform();
+        	rotation.rotate(angleInRadians, joint31_position.getX(), joint31_position.getY());
 
-        	angle=-angle;
-        	angleInRadians = Math.toRadians(angle);
+        	Point2D new_joint32_position = rotation.transform(joint32_position, null);
 
-        	AffineTransform rotation2 = new AffineTransform();     
-        	rotation2.rotate(angleInRadians, joint1_position.getX(), joint1_position.getY());
-
-        	Point2D new_joint2_position = rotation2.transform(joint2_position, null);
-        	new_joint3_position = rotation2.transform(new_joint3_position, null);
-
-        	if(isPossiblePosition(joint1_position, new_joint2_position, new_joint3_position))
+        	if(isPossiblePosition(joint0_position, joint31_position, new_joint32_position))
         	{
-        		arm.setJoint11(new_joint2_position);
-        		arm.setJoint12(new_joint3_position);
+        		arm.setJoint32(new_joint32_position);
         	}
 
         	repaint();
         }
+        if(key==KeyEvent.VK_D)
+        {
+            int angle=+15;
+            double angleInRadians = Math.toRadians(angle);
+            
+            arm.setArm31Angle(arm.getArm31Angle()+angle);
+            arm.setArm32Angle(arm.getArm32Angle()+angle);
+            
+            Point2D joint0_position=new Point2D.Double(arm.getJoint0().getX(), arm.getJoint0().getY());
+            Point2D joint31_position=new Point2D.Double(arm.getJoint31().getX(), arm.getJoint31().getY());
+            Point2D joint32_position=new Point2D.Double(arm.getJoint32().getX(), arm.getJoint32().getY());
 
+            AffineTransform rotation = new AffineTransform();
+            rotation.rotate(angleInRadians, joint0_position.getX(), joint0_position.getY());
+
+            Point2D new_joint31_position = rotation.transform(joint31_position, null);
+            Point2D new_joint32_position = rotation.transform(joint32_position, null);
+
+            if(isPossiblePosition(joint0_position, new_joint31_position, new_joint32_position))
+            {
+            	arm.setJoint31(new_joint31_position);
+            	arm.setJoint32(new_joint32_position);
+            }
+            
+            repaint();
+        }
+
+        if(key==KeyEvent.VK_F)
+        {
+        	int angle=+15;
+        	double angleInRadians = Math.toRadians(angle);
+        	
+        	arm.setArm32Angle(arm.getArm32Angle()+angle);
+
+        	Point2D joint0_position=new Point2D.Double(arm.getJoint0().getX(), arm.getJoint0().getY());
+        	Point2D joint31_position=new Point2D.Double(arm.getJoint31().getX(), arm.getJoint31().getY());
+        	Point2D joint32_position=new Point2D.Double(arm.getJoint32().getX(), arm.getJoint32().getY());
+
+        	AffineTransform rotation = new AffineTransform();
+        	rotation.rotate(angleInRadians, joint31_position.getX(), joint31_position.getY());
+
+        	Point2D new_joint32_position = rotation.transform(joint32_position, null);
+
+        	if(isPossiblePosition(joint0_position, joint31_position, new_joint32_position))
+        	{
+        		arm.setJoint32(new_joint32_position);
+        	}
+
+        	repaint();
+        }
+        
+        repaint();
     }
     
 	@Override
@@ -446,7 +590,46 @@ public class Arm1 extends JPanel implements KeyListener, ActionListener
 		
 		Rectangle rect0_31=new Rectangle(420, 400, 120, 40);
 		Rectangle rect31_32=new Rectangle(420, 400, 60, 40);
-
+		
+		double arm11Angle=90;
+		double arm12Angle=90;
+		
+		double arm21Angle=225;
+		double arm22Angle=225;
+		
+		double arm31Angle=315;
+		double arm32Angle=315;
+		
+		public double getArm11Angle()
+		{
+			return arm11Angle;
+		}
+		
+		public double getArm12Angle()
+		{
+			return arm12Angle;
+		}
+		
+		public double getArm21Angle()
+		{
+			return arm21Angle;
+		}
+		
+		public double getArm22Angle()
+		{
+			return arm22Angle;
+		}
+		
+		public double getArm31Angle()
+		{
+			return arm31Angle;
+		}
+		
+		public double getArm32Angle()
+		{
+			return arm32Angle;
+		}
+		
 		public Point2D getJoint0()
 		{
 			return joint0;
@@ -515,6 +698,36 @@ public class Arm1 extends JPanel implements KeyListener, ActionListener
 		public Rectangle getRect31_32()
 		{
 			return rect31_32;
+		}
+		
+		public void setArm11Angle(double arm11Angle)
+		{
+			this.arm11Angle=arm11Angle;
+		}
+		
+		public void setArm12Angle(double arm12Angle)
+		{
+			this.arm12Angle=arm12Angle;
+		}
+		
+		public void setArm21Angle(double arm21Angle)
+		{
+			this.arm21Angle=arm21Angle;
+		}
+		
+		public void setArm22Angle(double arm22Angle)
+		{
+			this.arm22Angle=arm22Angle;
+		}
+		
+		public void setArm31Angle(double arm31Angle)
+		{
+			this.arm31Angle=arm31Angle;
+		}
+		
+		public void setArm32Angle(double arm32Angle)
+		{
+			this.arm32Angle=arm32Angle;
 		}
 		
 		public void setJoint0(Point2D joint0)

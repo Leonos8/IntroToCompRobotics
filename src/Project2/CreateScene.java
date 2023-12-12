@@ -58,8 +58,6 @@ public class CreateScene extends JPanel implements KeyListener, ActionListener
 		maxNumVertices=5;
 		minRadius=50;
 		maxRadius=100;
-		//getInput();
-		createPanel();
 		if(!fromFile)
 		{
 			generatePolygonArray();
@@ -91,33 +89,6 @@ public class CreateScene extends JPanel implements KeyListener, ActionListener
 				}
 			}
 		}
-	}
-	
-	public void createPanel()
-	{
-		frame=new JFrame("Assignment 1");
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		
-        frame.setSize(frameX, frameY);
-        //frame.setVisible(true);
-        frame.addKeyListener(this);
-        
-        this.setBackground(Color.white);
-        //this.setLayout(new BorderLayout());
-        this.setLayout(null);
-        this.setVisible(true);
-        addKeyListener(this);
-        frame.getContentPane().add(this);
-        
-        mb = new JMenuBar();
-        fileMenu = new JMenu("File");
-        saveAsItem = new JMenuItem("Save As");
-        saveAsItem.addActionListener(this);
-        fileMenu.add(saveAsItem);
-        mb.add(fileMenu);
-        frame.setJMenuBar(mb);
-        
-        frame.setVisible(true);
 	}
 	
 	public void generatePolygonArray()

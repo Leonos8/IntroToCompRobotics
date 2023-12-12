@@ -1,6 +1,5 @@
 package Project2;
 
-import java.awt.Point;
 import java.awt.geom.Point2D;
 
 import Project2.CreateScene.Obstacle;
@@ -11,6 +10,23 @@ public class CollisionChecking
 	public void checkCollision(Obstacle[] obstacles)
 	{
 		
+	}
+	
+	public static boolean circle_PolyCollisionDetection(Point2D center1, Obstacle o2)
+	{
+		CreateScene cs=new CreateScene();
+		Obstacle o1=cs.new Obstacle();
+		o1.setCenter(center1);
+		Point2D[] o1Square=new Point2D[] 
+				{
+						new Point2D.Double(center1.getX()-25, center1.getY()-25),
+						new Point2D.Double(center1.getX()+25, center1.getY()-25),
+						new Point2D.Double(center1.getX()+25, center1.getY()-25),
+						new Point2D.Double(center1.getX()+25, center1.getY()+25)
+				};;
+		o1.setPoints(o1Square);
+		
+		return separatingAxisTheorem(o1, o2);
 	}
 	
 	public void findFurthestPoint(int direction)
@@ -60,7 +76,7 @@ public class CollisionChecking
 		return collision;
 	}
 	
-	/*public static boolean separatingAxisTheorem(RigidBody2D rb, Obstacle o1)
+	public static boolean separatingAxisTheorem(RigidBody1 rb, Obstacle o1)
 	{
 		Point2D[] p1=o1.getPoints();
 		Point2D[] p2=rb.getPoints();
@@ -99,7 +115,7 @@ public class CollisionChecking
 		
 		collision=true;
 		return collision;
-	}*/
+	}
 	
 	/*public void naiveCollisionCheck(Obstacle[] obstacles)
 	{
