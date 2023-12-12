@@ -78,61 +78,70 @@ public class controls extends JPanel
 		return collides;
 	}
 	
-	public boolean collides(Point2D[] verts, double[] u)
+	public boolean collides(Point2D[] oldVertices, Point2D[] newVertices)
 	{
 		boolean collides=false;
 		
-		System.out.println(1+"\t"+verts[0].getX()
-				+"\t"+verts[0].getY());
-		
-		System.out.println(1+"\t"+verts[1].getX()
-				+"\t"+verts[1].getY());
-		
-		System.out.println(1+"\t"+verts[2].getX()
-				+"\t"+verts[2].getY());
-		
-		System.out.println(1+"\t"+verts[3].getX()
-				+"\t"+verts[3].getY());
-		
-		Point2D[] vertices=move(verts, u);
-		
-		System.out.println(2+"\t"+
-				vertices[0].getX()+"\t"+vertices[0].getY());
-		System.out.println(2+"\t"+
-				vertices[1].getX()+"\t"+vertices[1].getY());
-		System.out.println(2+"\t"+
-				vertices[2].getX()+"\t"+vertices[2].getY());
-		System.out.println(2+"\t"+
-				vertices[3].getX()+"\t"+vertices[3].getY());
+		double maxDistance=80;
 
-		for(int i=0; i<vertices.length; i++)
+		for(int i=0; i<newVertices.length; i++)
 		{
-			System.out.println("HI "+vertices[i].getX()+"\t"+vertices[i].getY());
-			if(vertices[i].getX()<=80
-					|| vertices[i].getX()>=720
-					|| vertices[i].getY()<=80
-					|| vertices[i].getY()>=720)
+			System.out.println("HI "+newVertices[i].getX()+"\t"+newVertices[i].getY());
+			if(newVertices[i].getX()<=80
+					|| newVertices[i].getX()>=720
+					|| newVertices[i].getY()<=80
+					|| newVertices[i].getY()>=720)
 			{
 				System.out.println("COLLIDES");
 				collides=true;
 			}
 		}
 		
-		for(int j=0; j<landmarks.size(); j++)
+		for(int i=0; i<landmarks.size(); i++)
 		{
-			if((vertices[0].getX()>=landmarks.get(j).getX()-20 
-					&& vertices[1].getX()<=landmarks.get(j).getX()+20)
-					&&
-					(vertices[0].getY()>=landmarks.get(j).getY()-20 
-					&& vertices[1].getY()<=landmarks.get(j).getY()+20)
-					&&
-					(vertices[2].getX()>=landmarks.get(j).getX()-20 
-					&& vertices[3].getX()<=landmarks.get(j).getX()+20)
-					&&
-					(vertices[2].getY()>=landmarks.get(j).getY()-20 
-					&& vertices[3].getY()<=landmarks.get(j).getY()+20))
+			for(int j=0; j<newVertices.length; j++)
 			{
-				collides=true;
+				double A;
+				double B;
+				double C;
+				
+				int p=j;
+				int q=j+1;
+				
+				if(q>3)
+				{
+					q=0;
+				}
+				
+				A=newVertices[q].getY()-newVertices[p].getY();
+				B=newVertices[q].getX()-newVertices[p].getX();
+				C=-newVertices[q].getY()*(B)-newVertices[p].getX()*(A);
+				
+				double distance=Math.abs((A*landmarks.get(i).getX())+(B*landmarks.get(i).getY())+C)/Math.sqrt((A*A)+(B*B));
+				
+				if(distance<maxDistance)
+				{
+					
+					double xd=landmarks.get(i).getX()-newVertices[p].getX();
+					double yd=landmarks.get(i).getY()-newVertices[p].getY();
+
+					distance=Math.sqrt(xd*xd+yd*yd);
+					
+					if(distance<maxDistance)
+					{
+						return true;
+					}
+					
+					xd=landmarks.get(i).getX()-newVertices[q].getX();
+					yd=landmarks.get(i).getY()-newVertices[q].getY();
+
+					distance=Math.sqrt(xd*xd+yd*yd);
+					
+					if(distance<maxDistance)
+					{
+						return true;
+					}
+				}
 			}
 		}
 		
@@ -182,17 +191,104 @@ public class controls extends JPanel
 	
 	public double[][] generateControlSequence()
 	{
-		System.out.println("HI");
+		/*System.out.println("HI");
 		verts=robot.getVertices();
 		Point2D[] vertices;
 		double[][] controlSequence=new double[200][3];
 		
-		for(int i=0; i<200; i+=20)
-		{
-			double[] u=new double[3];
+		Point2D startPosition=new Point2D.Double(0, 0);
+		double startDirection=0;*/
+		
+		// Input startPosition of the center of the robot,
+		// Input startDirection of the robot
+		// Input width and the height of the robot
+		double direction=robot.getQ()[2];
+		Point2D center=new Point2D.Double(robot.getQ()[0], robot.getQ()[1]);
 
-			do {
+		// Generate vertices of the robot as offsets from the center point
+		// Robot's central point is what we track
+
+
+		// Generate vertex[i] as an offset from ceneter point;
+		Point2D[] vertex=robot.getVertices();
+		
+		/*vertex[0]=new Point2D.Double(center.getX()-robot.getW()/2,center.getY()+robot.getL()/2);
+		vertex[1]=new Point2D.Double(center.getX()+robot.getW()/2,center.getY()+robot.getL()/2);
+		vertex[2]=new Point2D.Double(center.getX()+robot.getW()/2,center.getY()-robot.getL()/2);
+		vertex[3]=new Point2D.Double(center.getX()-robot.getW()/2,center.getY()-robot.getL()/2);*/
+		double wheelCenterDistance=Math.sqrt(robot.getW()*robot.getW()+robot.getL()*robot.getL())/2;
+		double[] wheelCenterAngle=new double[4];
+		for(int i=0; i<4; i++)
+		{
+		    wheelCenterAngle[i]=Math.acos(vertex[i].getX()/wheelCenterDistance);
+		}
+
+
+		// Start a loop that generates steps
+		
+		int MAX_NUMBER_OF_TRIALS=20;
+		for(int step=0; step<10; step++)
+		{
+			// Try to make 1 movement step
+			int number_of_trials=0;
+			while(true)
+		    {
+				// generate new direction and movement
 				double angle=(Math.random()*360)-180;
+				double distance=(Math.random()*400)-200;
+				
+				double newDirection=direction+angle;
+				//Point2D newPosition=new Point2D.Double(startPosition.getX(), startPosition.getY());
+
+				// Move CENTER to new location
+				Point2D newCenter=new Point2D.Double(center.getX()+distance*Math.cos(newDirection),
+												center.getY()+distance*Math.sin(newDirection));
+
+				// create a new POTENTIAL position of vertices
+				Point2D[] newVertex=new Point2D[4];
+
+				// create rotated new vertices
+				for(int i=0; i<4; i++)
+		        {
+					newVertex[i]=new Point2D.Double(newCenter.getX()+wheelCenterDistance*Math.cos(newDirection+wheelCenterAngle[i]),
+		                                   		newCenter.getY()+wheelCenterDistance*Math.sin(newDirection+wheelCenterAngle[i]));
+		        }
+
+				// Check if you can move to new center and new vertices without bumping into obstacle
+				boolean canMove=collides(vertex, newVertex);
+				if(canMove)
+		        {
+					center=newCenter;
+					vertex=newVertex;
+					direction=newDirection;
+
+					break;
+		        }
+				number_of_trials++;
+				
+				if(number_of_trials>=MAX_NUMBER_OF_TRIALS)
+				{
+					throw new RuntimeException("Could not generate valid move from this position: ("+center.getX()+", "+center.getY()+")");
+				}
+					
+		    }
+		}
+		
+		/*for(int i=0; i<200; i+=20)
+		{
+			//double[] u=new double[3];
+			double[] movement=new double[2];
+			
+			double angle=(Math.random()*360)-180;
+			double distance=(Math.random()*400)-200;
+			
+			double newDirection=startDirection+angle;
+			
+			Point2D newPosition=new Point2D.Double(startPosition.getX(), startPosition.getY());
+			
+			
+			/*do {
+				/*double angle=(Math.random()*360)-180;
 				if(angle==0)
 				{
 					angle+=.00001;
@@ -237,7 +333,7 @@ public class controls extends JPanel
 			{
 				controlSequence[j]=u;
 			}
-		}
+		}*/
 		
 		return controlSequence;
 	}
