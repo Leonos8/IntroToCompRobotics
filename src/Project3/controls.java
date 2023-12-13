@@ -20,15 +20,16 @@ public class controls extends JPanel
 	
 	public static final File currDir=new File(".");
 	public static final String absolutePath=currDir.getAbsolutePath();
-	public static final String fileP=absolutePath.substring(0, absolutePath.length()-2)
+	public static final String fileP=absolutePath.substring(0, 
+			absolutePath.length()-2)
 			+File.separator;	
-	public static final String landmarksPath=fileP+File.separator+"src"+File.separator
-			+"Project3"+File.separator+"maps"+File.separator;
+	public static final String landmarksPath=fileP+File.separator+"src"
+			+File.separator+"Project3"+File.separator+"maps"+File.separator;
 	
 	JFrame frame;
 		
 	ArrayList<Point2D> landmarks;
-	ArrayList<double[]> path=new ArrayList<>();
+	ArrayList<double[]> centerPath=new ArrayList<>();
 	
 	Point2D[] verts=new Point2D.Double[4];
 	
@@ -42,10 +43,10 @@ public class controls extends JPanel
 	
 	public boolean collides()
 	{
-		boolean collides=false;
+		double maxDistance=80;
 		
 		Point2D[] vertices=robot.getVertices();
-		
+
 		for(int i=0; i<vertices.length; i++)
 		{
 			if(vertices[i].getX()<=80
@@ -53,47 +54,76 @@ public class controls extends JPanel
 					|| vertices[i].getY()<=80
 					|| vertices[i].getY()>=720)
 			{
-				collides=true;
+				//System.out.println("COLLIDES");
+				return true;
 			}
 		}
 		
-		for(int j=0; j<landmarks.size(); j++)
+		for(int i=0; i<landmarks.size(); i++)
 		{
-			if((vertices[0].getX()>=landmarks.get(j).getX()-20 
-					&& vertices[1].getX()<=landmarks.get(j).getX()+20)
-					&&
-					(vertices[0].getY()>=landmarks.get(j).getY()-20 
-					&& vertices[1].getY()<=landmarks.get(j).getY()+20)
-					&&
-					(vertices[2].getX()>=landmarks.get(j).getX()-20 
-					&& vertices[3].getX()<=landmarks.get(j).getX()+20)
-					&&
-					(vertices[2].getY()>=landmarks.get(j).getY()-20 
-					&& vertices[3].getY()<=landmarks.get(j).getY()+20))
+			for(int j=0; j<vertices.length; j++)
 			{
-				collides=true;
+				double A;
+				double B;
+				double C;
+				
+				int p=j;
+				int q=j+1;
+				
+				if(q>3)
+				{
+					q=0;
+				}
+				
+				A=vertices[q].getY()-vertices[p].getY();
+				B=vertices[q].getX()-vertices[p].getX();
+				C=-vertices[q].getY()*(B)-vertices[p].getX()*(A);
+				
+				double distance=Math.abs((A*landmarks.get(i).getX())
+						+(B*landmarks.get(i).getY())+C)/Math.sqrt((A*A)+(B*B));
+				
+				if(distance<maxDistance)
+				{
+					
+					double xd=landmarks.get(i).getX()-vertices[p].getX();
+					double yd=landmarks.get(i).getY()-vertices[p].getY();
+
+					distance=Math.sqrt(xd*xd+yd*yd);
+					
+					if(distance<maxDistance)
+					{
+						return true;
+					}
+					
+					xd=landmarks.get(i).getX()-vertices[q].getX();
+					yd=landmarks.get(i).getY()-vertices[q].getY();
+
+					distance=Math.sqrt(xd*xd+yd*yd);
+					
+					if(distance<maxDistance)
+					{
+						return true;
+					}
+				}
 			}
 		}
 		
-		return collides;
+		return false;
 	}
 	
 	public boolean collides(Point2D[] oldVertices, Point2D[] newVertices)
-	{
-		boolean collides=false;
-		
+	{		
 		double maxDistance=80;
 
 		for(int i=0; i<newVertices.length; i++)
 		{
-			System.out.println("HI "+newVertices[i].getX()+"\t"+newVertices[i].getY());
 			if(newVertices[i].getX()<=80
 					|| newVertices[i].getX()>=720
 					|| newVertices[i].getY()<=80
 					|| newVertices[i].getY()>=720)
 			{
-				System.out.println("COLLIDES");
-				collides=true;
+				//System.out.println("COLLIDES");
+				return true;
 			}
 		}
 		
@@ -117,7 +147,8 @@ public class controls extends JPanel
 				B=newVertices[q].getX()-newVertices[p].getX();
 				C=-newVertices[q].getY()*(B)-newVertices[p].getX()*(A);
 				
-				double distance=Math.abs((A*landmarks.get(i).getX())+(B*landmarks.get(i).getY())+C)/Math.sqrt((A*A)+(B*B));
+				double distance=Math.abs((A*landmarks.get(i).getX())
+						+(B*landmarks.get(i).getY())+C)/Math.sqrt((A*A)+(B*B));
 				
 				if(distance<maxDistance)
 				{
@@ -145,7 +176,7 @@ public class controls extends JPanel
 			}
 		}
 		
-		return collides;
+		return false;
 	}
 	
 	public void createDDRobot()
@@ -166,6 +197,8 @@ public class controls extends JPanel
 					new Point2D.Double(x-(W/2), y+(L/2)),
 					new Point2D.Double(x+(W/2), y-(L/2)),
 					new Point2D.Double(x+(W/2), y+(L/2))});
+			
+			robot.vertexHistory.add(robot.getVertices());
 			
 			/*System.out.println((x-(W/2))+"\t"+(y-(L/2)));
 			System.out.println((x-(W/2))+"\t"+(y+(L/2)));
@@ -200,7 +233,7 @@ public class controls extends JPanel
 		direction=Math.toRadians(direction);
 		
 		Point2D center=new Point2D.Double(robot.getQ()[0], robot.getQ()[1]);
-
+		centerPath.add(new double[] {center.getX(), center.getY()});
 		// Generate vertices of the robot as offsets from the center point
 		// Robot's central point is what we track
 
@@ -208,12 +241,13 @@ public class controls extends JPanel
 		// Generate vertex[i] as an offset from center point;
 		Point2D[] vertex=robot.getVertices();
 		
-		double wheelCenterDistance=Math.sqrt(robot.getW()*robot.getW()+robot.getL()*robot.getL())/2;
+		double wheelCenterDistance=Math.sqrt(robot.getW()*robot.getW()
+				+robot.getL()*robot.getL())/2;
 		double[] wheelCenterAngle=new double[4];
 		for(int i=0; i<4; i++)
 		{
-			System.out.println("NAN TEST"+wheelCenterDistance);//vertex[i].getX());///wheelCenterDistance);
-		    wheelCenterAngle[i]=Math.acos(vertex[i].getX()/wheelCenterDistance);
+		    wheelCenterAngle[i]=Math.acos((vertex[i].getX()-center.getX())
+		    		/wheelCenterDistance);
 		}
 
 
@@ -232,14 +266,12 @@ public class controls extends JPanel
 				angle=Math.toRadians(angle);
 				double velocity=(Math.random()*400)-200;
 				
-				double newDirection=direction+angle;
-				//Point2D newPosition=new Point2D.Double(startPosition.getX(), startPosition.getY());
-
-				
+				double newDirection=direction+angle;				
 				
 				// Move CENTER to new location
-				Point2D newCenter=new Point2D.Double(center.getX()+velocity*Math.cos(newDirection),
-												center.getY()+velocity*Math.sin(newDirection));
+				Point2D newCenter=new Point2D.Double(center.getX()
+						+velocity*Math.cos(newDirection), center.getY()
+						+velocity*Math.sin(newDirection));
 
 				// create a new POTENTIAL position of vertices
 				Point2D[] newVertex=new Point2D[4];
@@ -247,15 +279,16 @@ public class controls extends JPanel
 				// create rotated new vertices
 				for(int i=0; i<4; i++)
 		        {
-					System.out.println("Hello1 "+newCenter.getX());
+					/*System.out.println("Hello1 "+newCenter.getX());
 					System.out.println("Hello2 "+wheelCenterAngle[i]);
-					System.out.println("Hello3 "+newCenter.getY());
-					System.out.println("Hello4 "+wheelCenterDistance*Math.sin(newDirection+wheelCenterAngle[i]));
+					System.out.println("Hello3 "+newCenter.getY());*/
 
-					newVertex[i]=new Point2D.Double(newCenter.getX()+wheelCenterDistance*Math.cos(newDirection+wheelCenterAngle[i]),
-		                                   		newCenter.getY()+wheelCenterDistance*Math.sin(newDirection+wheelCenterAngle[i]));
+					newVertex[i]=new Point2D.Double(newCenter.getX()
+							+wheelCenterDistance*Math.cos(newDirection
+									+wheelCenterAngle[i]), newCenter.getY()
+							+wheelCenterDistance*Math.sin(newDirection
+									+wheelCenterAngle[i]));
 		        
-					System.out.println("BYE "+newVertex[i].getX()+"\t"+newVertex[i].getY());
 
 		        }
 
@@ -268,7 +301,18 @@ public class controls extends JPanel
 					vertex=newVertex;
 					direction=newDirection;
 					
+					robot.vertexHistory.add(vertex);
+					
+					centerPath.add(new double[] {center.getX(), center.getY()});
+					
 					direction=Math.toDegrees(direction);
+					
+					for(int i=0; i<4; i++)
+					{
+						System.out.println(vertex[i].getX()+", "
+					+vertex[i].getY());
+					}
+					System.out.println("///////////////////////");
 					
 					for(int seq=sequence*10; seq<(sequence*10)+10; seq++)
 					{
@@ -279,11 +323,13 @@ public class controls extends JPanel
 					break;
 		        }
 				number_of_trials++;
-				System.out.println(number_of_trials);
+				//System.out.println(number_of_trials);
 				
 				if(number_of_trials>=MAX_NUMBER_OF_TRIALS)
 				{
-					throw new RuntimeException("Could not generate valid move from this position: ("+center.getX()+", "+center.getY()+")");
+					throw new RuntimeException("Could not generate valid "
+							+ "move from this position: ("+center.getX()
+							+", "+center.getY()+")");
 				}
 					
 		    }
@@ -301,12 +347,11 @@ public class controls extends JPanel
 		double W=robot.getW();
 				
 		g.setColor(Color.blue);
-		System.out.println(vertices[0].getX()+"\t"+vertices[0].getY());
-		//g.fillRect((int)vertices[0].getX(), (int)vertices[0].getY(), (int)W, (int)L);
-		g.fillPolygon(new int[] {(int) vertices[0].getX(), (int) vertices[1].getX(), 
-				(int) vertices[3].getX(), (int) vertices[2].getX()}, 
-				new int[] {(int) vertices[0].getY(), (int) vertices[1].getY(), 
-						(int) vertices[3].getY(), (int) vertices[2].getY()}, 4);
+		g.fillPolygon(new int[] {(int) vertices[0].getX(), 
+				(int) vertices[1].getX(), (int) vertices[3].getX(), 
+				(int) vertices[2].getX()}, new int[] {(int) vertices[0].getY(), 
+						(int) vertices[1].getY(), (int) vertices[3].getY(), 
+						(int) vertices[2].getY()}, 4);
 	}
 	
 	public void loadLandmarks(int index)
@@ -321,7 +366,8 @@ public class controls extends JPanel
 			{
 				String line=sc.nextLine();
 				
-				landmarks.add(new Point2D.Double(Double.parseDouble(line.split(",")[0]),
+				landmarks.add(new Point2D.Double(Double.parseDouble(
+						line.split(",")[0]), 
 						Double.parseDouble(line.split(",")[1])));
 			}
 		} catch (FileNotFoundException e) {
@@ -334,14 +380,18 @@ public class controls extends JPanel
 	{
 		Point2D[] tmpVertices=robot.getVertices();
 		
-		double vx=u[0]*Math.cos(Math.toRadians(u[2]));
-		double vy=u[0]*Math.sin(Math.toRadians(u[2]));
+		double vx=u[0]*Math.cos(Math.toRadians(u[1]));
+		double vy=u[0]*Math.sin(Math.toRadians(u[1]));
 		
 		Point2D[] vertices=new Point2D.Double[] {
-				new Point2D.Double(tmpVertices[0].getX()+vx, tmpVertices[0].getY()+vy),
-				new Point2D.Double(tmpVertices[1].getX()+vx, tmpVertices[1].getY()+vy),
-				new Point2D.Double(tmpVertices[2].getX()+vx, tmpVertices[2].getY()+vy),
-				new Point2D.Double(tmpVertices[3].getX()+vx, tmpVertices[3].getY()+vy)};
+				new Point2D.Double(tmpVertices[0].getX()+vx, 
+						tmpVertices[0].getY()+vy),
+				new Point2D.Double(tmpVertices[1].getX()+vx, 
+						tmpVertices[1].getY()+vy),
+				new Point2D.Double(tmpVertices[2].getX()+vx, 
+						tmpVertices[2].getY()+vy),
+				new Point2D.Double(tmpVertices[3].getX()+vx, 
+						tmpVertices[3].getY()+vy)};
 	
 		return vertices;
 	}
@@ -350,14 +400,18 @@ public class controls extends JPanel
 	{
 		//Point2D[] tmpVertices=robot.getVertices();
 		
-		double vx=u[0]*Math.cos(Math.toRadians(u[2]));
-		double vy=u[0]*Math.sin(Math.toRadians(u[2]));
+		double vx=u[0]*Math.cos(Math.toRadians(u[1]));
+		double vy=u[0]*Math.sin(Math.toRadians(u[1]));
 		 
 		Point2D[] vertices=new Point2D.Double[] {
-				new Point2D.Double(tmpVertices[0].getX()+vx, tmpVertices[0].getY()+vy),
-				new Point2D.Double(tmpVertices[1].getX()+vx, tmpVertices[1].getY()+vy),
-				new Point2D.Double(tmpVertices[2].getX()+vx, tmpVertices[2].getY()+vy),
-				new Point2D.Double(tmpVertices[3].getX()+vx, tmpVertices[3].getY()+vy)};
+				new Point2D.Double(tmpVertices[0].getX()+vx, 
+						tmpVertices[0].getY()+vy),
+				new Point2D.Double(tmpVertices[1].getX()+vx, 
+						tmpVertices[1].getY()+vy),
+				new Point2D.Double(tmpVertices[2].getX()+vx, 
+						tmpVertices[2].getY()+vy),
+				new Point2D.Double(tmpVertices[3].getX()+vx, 
+						tmpVertices[3].getY()+vy)};
 	
 		return vertices;
 	}
@@ -368,13 +422,14 @@ public class controls extends JPanel
 		
 		for(int i=0; i<landmarks.size(); i++)
 		{
-			g.fillOval((int)landmarks.get(i).getX(), (int)landmarks.get(i).getY(), 
+			g.fillOval((int)landmarks.get(i).getX(), 
+					(int)landmarks.get(i).getY(), 
 					20, 20);
 		}
 		
 		graphRobot(g);
 		
-		if(path.size()>=2)
+		/*if(path.size()>=2)
 		{
 			for(int i=0; i<path.size()-1; i++)
 			{
@@ -382,13 +437,11 @@ public class controls extends JPanel
 				Graphics2D g2d=(Graphics2D) g;
 				g2d.setStroke(new BasicStroke(5));
 				g2d.setColor(Color.gray);
-				//System.out.println((int)path.get(i)[0]+"\t"+(int)path.get(i)[1]);
-				//System.out.println((int)path.get(i+1)[0]+"\t"+(int)path.get(i+1)[1]);
 
 				g2d.drawLine((int)path.get(i)[0], (int)path.get(i)[1], 
 						(int)path.get(i+1)[0], (int)path.get(i+1)[1]);
 			}
-		}
+		}*/
 	}
 	
 	public void rotate(double[] q, double angle)
@@ -408,7 +461,7 @@ public class controls extends JPanel
 		
 		Point2D[] newVertices=new Point2D[vertices.length];
 		
-		System.out.println(vertices[0].getX());
+		//System.out.println(vertices[0].getX());
 		
 		for(int i=0; i<vertices.length; i++)
 		{
@@ -427,7 +480,7 @@ public class controls extends JPanel
 		
 		q[2]+=angle;
 		robot.setVertices(newVertices);
-		System.out.println(robot.getVertices()[0].getX());
+		//System.out.println(robot.getVertices()[0].getX());
 	}
 	
 	public void run()
@@ -451,16 +504,55 @@ public class controls extends JPanel
 	
 	public void runControlSequence()
 	{
+		try {
+			Thread.sleep(2000);
+			
+			for(int i=0; i<200; i++)
+			{
+				if(i%20==0)
+				{
+					if(i==0)
+					{
+						int index=(i/20)+1;
+						System.out.println(index);
+						robot.setVertices(robot.vertexHistory.get(index));
+					}
+					else
+					{
+						int index=(i/(i*20))+1;
+						System.out.println(index);
+						robot.setVertices(robot.vertexHistory.get(index));
+					}
+					
+					for(int j=0; j<4; j++)
+					{
+						System.out.println(robot.getVertices()[j].getX()
+								+", "+robot.getVertices()[j].getY());
+					}
+					System.out.println("00000000000000000000");
+					
+					repaint();
+				}
+				
+				Thread.sleep((long)(1000*robot.getDt()));
+			}
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	/*public void runControlSequence()
+	{
 		path.add(robot.getQ());
 		
 		try {
 			for(int i=0; i<200; i++)
-			{
-				Thread.sleep((long)(1000*robot.getDt()));
-				
+			{				
 				double[] u=robot.getControlSequences()[i];
 				
-				if(robot.getControlSequences()[i]!=robot.getControlSequences()[i+1])
+				if(robot.getControlSequences()[i]!=
+							robot.getControlSequences()[i+1])
 				{
 					Point2D[] newVertices=move(u);
 					
@@ -468,11 +560,11 @@ public class controls extends JPanel
 					
 					double newX=newVertices[0].getX()+(robot.getW()/2);
 					double newY=newVertices[0].getY()+(robot.getL()/2);
-					double newAngle=u[2];
+					double newAngle=u[1];
 					
 					robot.setQ(new double[] {newX, newY, newAngle});
 					
-					rotate(robot.getQ(), u[2]);
+					rotate(robot.getQ(), u[1]);
 					
 					path.add(robot.getQ());
 					
@@ -483,15 +575,18 @@ public class controls extends JPanel
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-	}
+	}*/
 	
 	public class ddRobot //Differential Drive Robot
 	{
 		double[] q=new double[3]; //Robot state [x, y, angle]
 		double[][] controlSequences=new double[200][2]; //Control input
 		Point2D[] vertices=new Point2D.Double[4];
-		final double[] wheelDims=new double[] {}; //Wheel dimensions, x, y, width, height
-		final double L=80.0; //Distance between wheels (Length) //Initially reps Y
+		ArrayList<Point2D[]> vertexHistory=new ArrayList<>();
+		//Wheel dimensions, x, y, width, height
+		final double[] wheelDims=new double[] {}; 
+		//Distance between wheels (Length) //Initially reps Y
+		final double L=80.0; 
 		final double W=40; //Width //Initially represents X
 		final double dt=.1; //Timestep
 		
