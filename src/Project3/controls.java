@@ -302,6 +302,7 @@ public class controls extends JPanel
 				double angle=(Math.random()*360)-180;
 				angle=Math.toRadians(angle);
 				double velocity=(Math.random()*400)-200;
+				direction=Math.toRadians(direction);
 				
 				double newDirection=direction+angle;				
 				
@@ -344,6 +345,8 @@ public class controls extends JPanel
 					
 					direction=Math.toDegrees(direction);
 					
+					System.out.println("Velocity: "+velocity);
+					System.out.println("Angle: "+direction);
 					for(int i=0; i<4; i++)
 					{
 						System.out.println(vertex[i].getX()+", "
@@ -466,17 +469,31 @@ public class controls extends JPanel
 		
 		graphRobot(g);
 		
-		/*if(path.size()>=2)
+		/*System.out.println(robot.getPathStep());
+		if(robot.getPathStep()>=1)
 		{
-			for(int i=0; i<path.size()-1; i++)
+			for(int i=0; i<robot.getPathStep()-1; i++)
 			{
 				//System.out.println(3);
 				Graphics2D g2d=(Graphics2D) g;
 				g2d.setStroke(new BasicStroke(5));
 				g2d.setColor(Color.gray);
 
-				g2d.drawLine((int)path.get(i)[0], (int)path.get(i)[1], 
-						(int)path.get(i+1)[0], (int)path.get(i+1)[1]);
+				g2d.drawLine((int)centerPath.get(i)[0], (int)centerPath.get(i)[1], 
+						(int)centerPath.get(i+1)[0], (int)centerPath.get(i+1)[1]);
+			}
+		}*/
+		/*if(centerPath.size()>=2)
+		{
+			for(int i=0; i<centerPath.size()-1; i++)
+			{
+				//System.out.println(3);
+				Graphics2D g2d=(Graphics2D) g;
+				g2d.setStroke(new BasicStroke(5));
+				g2d.setColor(Color.gray);
+
+				g2d.drawLine((int)centerPath.get(i)[0], (int)centerPath.get(i)[1], 
+						(int)centerPath.get(i+1)[0], (int)centerPath.get(i+1)[1]);
 			}
 		}*/
 	}
@@ -548,10 +565,22 @@ public class controls extends JPanel
 			{
 				if(i%20==0)
 				{
-					String tmp=String.valueOf(i);
-					int index=Integer.parseInt
-							(String.valueOf(tmp.charAt(0)))/2;
+					int index=0;
+					if(i<100)
+					{
+						String tmp=String.valueOf(i);
+						index=Integer.parseInt
+								(String.valueOf(tmp.charAt(0)))/2;
+					}
+					else if(i>=100)
+					{
+						String tmp=String.valueOf(i);
+						index=Integer.parseInt
+								(tmp.substring(0,2))/2;
+					}
 					System.out.println(index);
+					
+					robot.setPathStep(index);
 					robot.setVertices(robot.vertexHistory.get(index));
 					
 					for(int j=0; j<4; j++)
@@ -619,6 +648,7 @@ public class controls extends JPanel
 		final double L=80.0; 
 		final double W=40; //Width //Initially represents X
 		final double dt=.1; //Timestep
+		int pathStep;
 		
 		public double[][] getControlSequences()
 		{
@@ -633,6 +663,11 @@ public class controls extends JPanel
 		public double getL()
 		{
 			return L;
+		}
+		
+		public int getPathStep()
+		{
+			return pathStep;
 		}
 		
 		public double[] getQ()
@@ -658,6 +693,11 @@ public class controls extends JPanel
 		public void setControlSequences(double[][] controlSequences)
 		{
 			this.controlSequences=controlSequences;
+		}
+		
+		public void setPathStep(int p)
+		{
+			pathStep=p;
 		}
 		
 		public void setQ(double[] q)
