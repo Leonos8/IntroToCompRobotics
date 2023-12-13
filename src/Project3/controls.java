@@ -511,18 +511,11 @@ public class controls extends JPanel
 			{
 				if(i%20==0)
 				{
-					if(i==0)
-					{
-						int index=(i/20)+1;
-						System.out.println(index);
-						robot.setVertices(robot.vertexHistory.get(index));
-					}
-					else
-					{
-						int index=(i/(i*20))+1;
-						System.out.println(index);
-						robot.setVertices(robot.vertexHistory.get(index));
-					}
+					String tmp=String.valueOf(i);
+					int index=Integer.parseInt
+							(String.valueOf(tmp.charAt(0)))/2;
+					System.out.println(index);
+					robot.setVertices(robot.vertexHistory.get(index));
 					
 					for(int j=0; j<4; j++)
 					{
