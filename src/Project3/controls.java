@@ -122,13 +122,50 @@ public class controls extends JPanel
 					|| newVertices[i].getY()<=80
 					|| newVertices[i].getY()>=720)
 			{
-				//System.out.println("COLLIDES");
 				return true;
 			}
 		}
 		
 		for(int i=0; i<landmarks.size(); i++)
 		{
+			for(int j=0; j<oldVertices.length; j++)
+			{
+				double A;
+				double B;
+				double C;
+				
+				A=newVertices[j].getY()-oldVertices[j].getY();
+				B=newVertices[j].getX()-oldVertices[j].getX();
+				C=-newVertices[j].getY()*(B)-oldVertices[j].getX()*(A);
+				
+				double distance=Math.abs((A*landmarks.get(i).getX())
+						+(B*landmarks.get(i).getY())+C)/Math.sqrt((A*A)+(B*B));
+				
+				if(distance<maxDistance)
+				{
+					
+					double xd=landmarks.get(i).getX()-oldVertices[j].getX();
+					double yd=landmarks.get(i).getY()-oldVertices[j].getY();
+
+					distance=Math.sqrt(xd*xd+yd*yd);
+					
+					if(distance<maxDistance)
+					{
+						return true;
+					}
+					
+					xd=landmarks.get(i).getX()-newVertices[j].getX();
+					yd=landmarks.get(i).getY()-newVertices[j].getY();
+
+					distance=Math.sqrt(xd*xd+yd*yd);
+					
+					if(distance<maxDistance)
+					{
+						return true;
+					}
+				}
+			}
+			
 			for(int j=0; j<newVertices.length; j++)
 			{
 				double A;
